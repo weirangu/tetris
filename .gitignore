@@ -1,0 +1,10 @@
+# Ignore all except
+/*
+
+!*.gitignore
+!*.md
+!*.qpf
+!*.qsf
+!*.v
+!*.bsf
+!*.do
