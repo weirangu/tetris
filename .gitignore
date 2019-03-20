@@ -5,6 +5,7 @@
 !*.md
 !*.qpf
 !*.qsf
+!*.qip
 !*.v
 !*.bsf
 !*.do
