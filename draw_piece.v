@@ -47,3 +47,52 @@ module draw_piece
 	assign Y = board_location_y + Y_START + offset[3:2];
 	assign finished = (board_location_x == 4'b1010) && (board_location_y == 5'b10100);
 endmodule
+
+module draw_tetromino
+	(
+		input enable,
+		input [2:0] block,
+		input [7:0] X_anchor,
+		input [6:0] Y_anchor,
+		input reset,
+		input clk,
+		output reg [7:0] X_vga,
+		output reg [6:0] Y_vga,
+		output [5:0] colour,
+		output reg writeEn
+	);
+	
+	wire [7:0] coord_x, coord_y;
+	lut b(block, 2'b00, coord_x, coord_y, colour);
+	
+	reg [5:0] counter;
+	
+	always @(posedge clk, negedge reset) begin
+		if (~reset) begin 
+			counter <= 6'b000000;
+			writeEn <= 1'b0;
+		end
+		else begin
+			writeEn <= 1'b1;
+			case (counter[5:4])
+				2'b00: begin
+					X_vga <= counter[1:0] + X_anchor + (coord_x[1:0] * 3'b100);
+					Y_vga <= counter[3:2] + Y_anchor + (coord_y[1:0] * 3'b100);
+				end
+				2'b01: begin
+					X_vga <= counter[1:0] + X_anchor + (coord_x[3:2] * 3'b100);
+					Y_vga <= counter[3:2] + Y_anchor + (coord_y[3:2] * 3'b100);
+				end
+				2'b10: begin
+					X_vga <= counter[1:0] + X_anchor + (coord_x[5:4] * 3'b100);
+					Y_vga <= counter[3:2] + Y_anchor + (coord_y[5:4] * 3'b100);
+				end
+				2'b11: begin
+					X_vga <= counter[1:0] + X_anchor + (coord_x[7:6] * 3'b100);
+					Y_vga <= counter[3:2] + Y_anchor + (coord_y[7:6] * 3'b100);
+				end
+			endcase
+			counter <= counter + 1;
+		end
+	end
+endmodule

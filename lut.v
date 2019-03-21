@@ -44,6 +44,11 @@ module lut
 				Y = 8'b00_00_01_01;
 				colour = 6'b11_00_00;
 			end
+			default: begin
+				X = 8'b00_01_10_11;
+				Y = 8'b00_00_00_00;
+				colour = 6'b00_11_11;
+			end
 		endcase
 	end
 endmodule

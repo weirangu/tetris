@@ -58,4 +58,6 @@ module top_level
 		defparam VGA.MONOCHROME = "FALSE";
 		defparam VGA.BITS_PER_COLOUR_CHANNEL = 2;
 		defparam VGA.BACKGROUND_IMAGE = "black.mif";
+		
+	draw_tetromino draw (SW[2:0], 8'b00010000, 7'b0001000, resetn, CLOCK_50, x, y, colour, writeEn);
 endmodule
