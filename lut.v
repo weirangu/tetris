@@ -39,7 +39,7 @@ module lut
 				Y = 8'b01_01_00_01;
 				colour = 6'b11_00_11;
 			end
-			3'b101: begin
+			3'b110: begin
 				X = 8'b00_01_01_10;
 				Y = 8'b00_00_01_01;
 				colour = 6'b11_00_00;

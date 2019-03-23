@@ -15,18 +15,19 @@ module control
 		CLEAR_BOARD_WAIT = 4'b0001,
 		GET_PIECE = 4'b0011,
 		DETECT_COLLISION = 4'b0010,
-		DETECT_COLLISON_WAIT = 4'b0110
-		ERASE_OLD = 4'b0100,
-		DRAW_NEW = 4'b0101,
-		DRAW_NEW_WEIGHT = 4'b0111
-		WAIT = 4'b1111;
+		DETECT_COLLISION_WAIT = 4'b0110,
+		SET_UP_RAM = 4'b1110,
+		ERASE_OLD = 4'b1100,
+		DRAW_NEW = 4'b1101,
+		DRAW_NEW_WAIT = 4'b1111,
+		WAIT = 4'b0111;
 
 	reg [3:0] curr_state, next_state;
 	
 	// The following wires are wired into the RAM module
 	wire [7:0] ram_addr;
 	wire [5:0] ram_in, ram_out;
-	wire ram_wren;
+	reg ram_wren;
 	
 	ram_board board(ram_addr, clk, ram_in, ram_wren, ram_out);
 	
@@ -35,21 +36,21 @@ module control
 	reg [2:0] curr_piece;
 	reg [1:0] curr_rotation;
 
-	wire [4:0] X_to_Draw;
-	wire [5:0] Y_to_Draw;
+	reg [4:0] X_to_Draw;
+	reg [5:0] Y_to_Draw;
 	
 	/* 0 is FALLING PIECE
 	*/
-	wire [1:0] module_select; // Determines which module we're currently using
-	wire [1:0] module_complete; // 1 on the clock cycle where the module finishes computation (and this is when the results can be used)
+	reg [1:0] module_select; // Determines which module we're currently using
+	reg [1:0] module_complete; // 1 on the clock cycle where the module finishes computation (and this is when the results can be used)
 								// 0 is detect collision
 								// 1 is for draw piece
 	
 	/* MODULES */
-	wire collision;
+	reg collision;
 	falling_piece f(module_select[0], curr_anc_X, curr_anc_Y, curr_piece, reset_n, clk, ram_out, new_anc_X, new_anc_Y, collision, ram_addr, module_complete[0]);
 	draw_tetromino draw (
-		.enable(module_select[1],
+		.enable(module_select[1]),
 		.block(curr_piece),
 		.X_anchor(X_to_Draw), 
 		.Y_anchor(Y_to_Draw), 
@@ -67,15 +68,15 @@ module control
 
 	always@(*)
    begin: state_table
-           case (current_state)
+           case (curr_state)
                CLEAR_BOARD: next_state = go ? CLEAR_BOARD_WAIT : CLEAR_BOARD;
                CLEAR_BOARD_WAIT: next_state = go ? CLEAR_BOARD_WAIT: GET_PIECE;
                GET_PIECE: next_state = DETECT_COLLISION; 
                DETECT_COLLISION: next_state = module_complete[0] ? DETECT_COLLISION_WAIT : DETECT_COLLISION; 
-               DETECT_COLLISION_WAIT: next_state = collision ? SET_UP_RAM : ERASE_OLD; 
+               DETECT_COLLISION_WAIT: next_state = collision ? SET_UP_RAM : ERASE_OLD;
                ERASE_OLD: next_state = module_complete[1] ? DRAW_NEW : ERASE_OLD; 
                DRAW_NEW: next_state = module_complete[1] ? DRAW_NEW_WAIT : DRAW_NEW;
-			   DRAW_NEW_WEIGHT: next_state = DETECT_COLLISION;
+					DRAW_NEW_WAIT: next_state = DETECT_COLLISION;
            default:     next_state = CLEAR_BOARD;
        endcase
    end // state_table
@@ -86,11 +87,11 @@ module control
 		module_complete = 0;
 		collision = 0;
 		ram_wren = 0;
-		case (curr_state) begin
+		case (curr_state)
 			GET_PIECE: begin
 				curr_piece <= 4'b000;
 				curr_rotation <= 2'b00;
-				next_state <= DETECT_COllISION;
+				next_state <= DETECT_COLLISION;
 			end
 			DETECT_COLLISION: begin
 				module_select <= 2'b01;
@@ -112,6 +113,6 @@ module control
 				curr_anc_X <= new_anc_X;
 				curr_anc_Y <= new_anc_Y;
 			end
-		end
+		endcase
 	end
 endmodule

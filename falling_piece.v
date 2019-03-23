@@ -16,11 +16,10 @@ module falling_piece
 	
 	localparam speed = 25'b1011111010111100001000000; // .5Hz
 	
-	wire [1:0] counter; // A counter for the clock, for us to check the 4 blocks ofa tetromino
+	reg [1:0] counter; // A counter for the clock, for us to check the 4 blocks ofa tetromino
 	
 	wire [7:0] coord_x, coord_y; // The offsets of the block
 	lut b(block, 2'b00, coord_x, coord_y, colour);
-	assign colour_in = colour_out;
 	
 	always @(posedge clk, negedge reset) begin
 		if (~reset || ~enable) begin
@@ -50,9 +49,5 @@ module falling_piece
 			endcase
 		end
 		counter <= counter + 1;
-	end
-	
-	always @(posedge enable) begin 
-		pulse <= speed;
 	end
 endmodule

@@ -68,7 +68,7 @@ module draw_tetromino
 	reg [5:0] counter;
 	
 	always @(posedge clk, negedge reset, posedge enable) begin
-		if (~reset || ~enable) begin 
+		if (~reset) begin 
 			counter <= 6'b000000;
 			writeEn <= 1'b0;
 		end
