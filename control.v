@@ -3,6 +3,8 @@ module control
 		input reset_n,
 		input go,
 		input clk,
+		input left,
+		input right,
 		output [7:0] X,
 		output [6:0] Y,
 		output [5:0] colour,
@@ -53,7 +55,21 @@ module control
 	
 	/* MODULES */
 	wire collision;
-	collision f(module_select[0], curr_anc_X, curr_anc_Y, curr_piece, clk, ram_out, new_anc_X, new_anc_Y, collision, ram_addr, module_complete[0]);
+	collision f(
+		.enable(module_select[0]), 
+		.X_anchor(curr_anc_X),
+		.Y_anchor(curr_anc_Y), 
+		.block(curr_piece),
+		.left(left),
+		.right(right), 
+		.clk(clk), 
+		.ram_Q(ram_out), 
+		.X_out(new_anc_X), 
+		.Y_out(new_anc_Y), 
+		.collision(collision), 
+		.ram_addr(ram_addr), 
+		.complete(module_complete[0])
+	);
 	
 	reg draw_clear;
 	draw_tetromino draw (
