@@ -52,29 +52,35 @@ module draw_tetromino
 	(
 		input enable,
 		input [2:0] block,
-		input [7:0] X_anchor,
-		input [6:0] Y_anchor,
-		input reset,
+		input [4:0] X_in,
+		input [5:0] Y_in,
+		input clear, // Determines whether we're clearing or not
 		input clk,
 		output reg [7:0] X_vga,
 		output reg [6:0] Y_vga,
-		output [5:0] colour,
-		output reg writeEn
+		output [5:0] colour_out,
+		output reg complete
 	);
 	
+	// The following convert board coordinates into screen coordinates
+	wire [7:0] X_anchor;
+	wire [6:0] Y_anchor;
+	assign X_anchor = 8'b10000000 + (X_in * 3'b100);
+	assign Y_anchor = 7'b00000100 + (Y_in * 3'b100);
+	
 	wire [7:0] coord_x, coord_y;
-	lut b(block, 2'b00, coord_x, coord_y, colour);
+	wire [5:0] blk_colour;
+	lut b(block, 2'b00, coord_x, coord_y, blk_colour);
+	assign colour_out = clear ? 6'b000000 : blk_colour;
 	
-	reg [5:0] counter;
+	reg [6:0] counter;
 	
-	always @(posedge clk, negedge reset, posedge enable) begin
-		if (~reset) begin 
-			counter <= 6'b000000;
-			writeEn <= 1'b0;
+	always @(posedge clk) begin
+		if (~enable) begin 
+			counter <= 7'b0000000;
+			complete <= 1'b0;
 		end
-		else 
-		if (enable) begin
-			writeEn <= 1'b1;
+		else begin
 			case (counter[5:4])
 				2'b00: begin
 					X_vga <= counter[1:0] + X_anchor + (coord_x[1:0] * 3'b100);
@@ -93,7 +99,12 @@ module draw_tetromino
 					Y_vga <= counter[3:2] + Y_anchor + (coord_y[7:6] * 3'b100);
 				end
 			endcase
-			counter <= counter + 1;
+			counter <= counter + 1'b1;
 		end
+		if (counter == 7'b1000000) begin
+			complete <= 1'b1;
+			counter <= 7'b0000000;
+		end
+		else complete <= 1'b0;
 	end
 endmodule
