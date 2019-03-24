@@ -17,10 +17,9 @@ module control
 		DETECT_COLLISION_WAIT = 4'b0110,
 		SET_UP_RAM = 4'b1110,
 		ERASE_OLD = 4'b1100,
-		ERASE_OLD_WAIT = 4'b1101,
-		DRAW_NEW = 4'b1111,
-		DRAW_NEW_WAIT = 4'b0111,
-		WAIT = 4'b0101;
+		DRAW_NEW = 4'b1110,
+		DRAW_NEW_WAIT = 4'b1111,
+		WAIT = 4'b1011;
 		
 	localparam speed = 25'b1011111010111100001000000; // .5Hz
 
@@ -85,8 +84,7 @@ module control
                GET_PIECE: next_state = DETECT_COLLISION; 
                DETECT_COLLISION: next_state = module_complete[0] ? DETECT_COLLISION_WAIT : DETECT_COLLISION; 
                DETECT_COLLISION_WAIT: next_state = collision ? SET_UP_RAM : ERASE_OLD;
-               ERASE_OLD: next_state = module_complete[1] ? ERASE_OLD_WAIT : ERASE_OLD;
-					ERASE_OLD_WAIT: next_state = DRAW_NEW;
+               ERASE_OLD: next_state = module_complete[1] ? DRAW_NEW : ERASE_OLD;
                DRAW_NEW: next_state = module_complete[1] ? DRAW_NEW_WAIT : DRAW_NEW;
 					DRAW_NEW_WAIT: next_state = module_complete[2] ? DETECT_COLLISION : DRAW_NEW_WAIT;
 					default: next_state = GET_PIECE;
@@ -131,14 +129,6 @@ module control
 			end
 			DRAW_NEW_WAIT: begin
 				module_select = 3'b100;
-			end
-			default: begin
-				ram_wren = 3'b000;
-				X_to_Draw = 3'b000;
-				Y_to_Draw = 3'b000;
-				module_select = 3'b000;
-				draw_clear = 1'b0;
-				writeEn = 1'b0;
 			end
 		endcase
 	end

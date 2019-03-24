@@ -81,30 +81,32 @@ module draw_tetromino
 			complete <= 1'b0;
 		end
 		else begin
-			case (counter[5:4])
-				2'b00: begin
-					X_vga <= counter[1:0] + X_anchor + (coord_x[1:0] * 3'b100);
-					Y_vga <= counter[3:2] + Y_anchor + (coord_y[1:0] * 3'b100);
-				end
-				2'b01: begin
-					X_vga <= counter[1:0] + X_anchor + (coord_x[3:2] * 3'b100);
-					Y_vga <= counter[3:2] + Y_anchor + (coord_y[3:2] * 3'b100);
-				end
-				2'b10: begin
-					X_vga <= counter[1:0] + X_anchor + (coord_x[5:4] * 3'b100);
-					Y_vga <= counter[3:2] + Y_anchor + (coord_y[5:4] * 3'b100);
-				end
-				2'b11: begin
-					X_vga <= counter[1:0] + X_anchor + (coord_x[7:6] * 3'b100);
-					Y_vga <= counter[3:2] + Y_anchor + (coord_y[7:6] * 3'b100);
-				end
-			endcase
-			counter <= counter + 1'b1;
+			if (counter == 7'b1000000) begin
+				complete <= 1'b1;
+				counter <= 7'b0000000;
+			end
+			else begin 
+				complete <= 1'b0;
+				counter <= counter + 1'b1;
+				case (counter[5:4])
+					2'b00: begin
+						X_vga <= counter[1:0] + X_anchor + (coord_x[1:0] * 3'b100);
+						Y_vga <= counter[3:2] + Y_anchor + (coord_y[1:0] * 3'b100);
+					end
+					2'b01: begin
+						X_vga <= counter[1:0] + X_anchor + (coord_x[3:2] * 3'b100);
+						Y_vga <= counter[3:2] + Y_anchor + (coord_y[3:2] * 3'b100);
+					end
+					2'b10: begin
+						X_vga <= counter[1:0] + X_anchor + (coord_x[5:4] * 3'b100);
+						Y_vga <= counter[3:2] + Y_anchor + (coord_y[5:4] * 3'b100);
+					end
+					2'b11: begin
+						X_vga <= counter[1:0] + X_anchor + (coord_x[7:6] * 3'b100);
+						Y_vga <= counter[3:2] + Y_anchor + (coord_y[7:6] * 3'b100);
+					end
+				endcase
+			end
 		end
-		if (counter == 7'b1000000) begin
-			complete <= 1'b1;
-			counter <= 7'b0000000;
-		end
-		else complete <= 1'b0;
 	end
 endmodule
