@@ -1,8 +1,8 @@
 module top_level
 	(
 		CLOCK_50,	//	On Board 50 MHz
-      KEY,			// Keys
-      SW,			// Switches
+      	KEY,			// Keys
+      	SW,			// Switches
 		VGA_CLK, 	//	VGA Clock
 		VGA_HS,		//	VGA H_SYNC
 		VGA_VS,		//	VGA V_SYNC
@@ -63,6 +63,8 @@ module top_level
 			.reset_n(resetn),
 			.go(KEY[1]),
 			.clk(CLOCK_50),
+			.left(!KEY[3]),
+			.right(!KEY[2]),
 			.X(x),
 			.Y(y),
 			.colour(colour),
