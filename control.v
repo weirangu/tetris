@@ -25,7 +25,7 @@ module control
 		DRAW_NEW_WAIT = 4'd10,
 		WAIT = 4'd11;
 		
-	localparam speed = 25'b1011111010111100001000000; // .5Hz
+	localparam speed = 25'b0101111101011110000100000; // .5Hz
 
 	reg [3:0] curr_state, next_state;
 	
@@ -201,6 +201,11 @@ module control
 			if (curr_state == DRAW_NEW_WAIT) begin
 				curr_anc_X <= new_anc_X;
 				curr_anc_Y <= new_anc_Y;
+			end
+			if (curr_state == GET_PIECE) begin
+				// Reset X and Y back to the top
+				curr_anc_X <= 4'd4;
+				curr_anc_Y <= 1'd0;
 			end
 		end
 	end
