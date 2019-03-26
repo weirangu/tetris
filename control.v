@@ -71,8 +71,8 @@ module control
 		.ram_Q(ram_out), 
 		.X_out(new_anc_X), 
 		.Y_out(new_anc_Y), 
-		.collision(collision_ram_addr), 
-		.ram_addr(ram_addr), 
+		.collision(collision), 
+		.ram_addr(collision_ram_addr), 
 		.complete(module_complete[0])
 	);
 	
@@ -105,7 +105,7 @@ module control
 		.block(curr_piece),
 		.rotation(curr_rotation),
 		.clk(clk),
-		.ram_addr(ram_addr),
+		.ram_addr(atr_ram_addr),
 		.wren(ram_wren),
 		.data(ram_in),
 		.complete(module_complete[3])
@@ -135,9 +135,9 @@ module control
 		X_to_Draw = 3'b000;
 		Y_to_Draw = 3'b000;
 		module_select = 4'b0000;
-		ram_wren = 3'b000;
 		writeEn = 1'b0;
 		ram_addr = 8'b00000000;
+		draw_clear = 1'b1;
 		case (curr_state)
 			CLEAR_BOARD: begin
 				// TODO
@@ -165,8 +165,8 @@ module control
 			ERASE_OLD: begin
 				X_to_Draw = curr_anc_X;
 				Y_to_Draw = curr_anc_Y;
-				module_select = 4'b0010;
 				writeEn = 1'b1;
+				module_select = 4'b0010;
 			end
 			SETUP_DRAW_NEW: begin
 				X_to_Draw = new_anc_X;
@@ -177,8 +177,8 @@ module control
 				X_to_Draw = new_anc_X;
 				Y_to_Draw = new_anc_Y;
 				draw_clear = 1'b0;
-				writeEn = 1'b1;
 				module_select = 4'b0010;
+				writeEn = 1'b1;
 			end
 			DRAW_NEW_WAIT: begin
 				module_select = 4'b0100;
@@ -189,7 +189,7 @@ module control
 	always @(posedge clk) begin
 		if (~reset_n) begin 
 			curr_state <= CLEAR_BOARD;
-			curr_anc_X <= 4'd5;
+			curr_anc_X <= 4'd4;
 			curr_anc_Y <= 1'd0;
 			piece_rng <= 3'b000;
 		end

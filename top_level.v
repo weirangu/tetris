@@ -45,7 +45,6 @@ module top_level
 			.x(x),
 			.y(y),
 			.plot(writeEn),
-			/* Signals for the DAC to drive the monitor. */
 			.VGA_R(VGA_R),
 			.VGA_G(VGA_G),
 			.VGA_B(VGA_B),
@@ -57,7 +56,7 @@ module top_level
 		defparam VGA.RESOLUTION = "160x120";
 		defparam VGA.MONOCHROME = "FALSE";
 		defparam VGA.BITS_PER_COLOUR_CHANNEL = 2;
-		defparam VGA.BACKGROUND_IMAGE = "black.mif";
+		defparam VGA.BACKGROUND_IMAGE = "bg.mif";
 		
 		control ctl(
 			.reset_n(resetn),
