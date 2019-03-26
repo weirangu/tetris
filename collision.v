@@ -8,8 +8,8 @@ module collision
 		input right,
 		input clk,
 		input [5:0] ram_Q,
-		output [4:0] X_out,
-		output [5:0] Y_out,
+		output reg [4:0] X_out,
+		output reg [5:0] Y_out,
 		output reg collision,
 		output reg [7:0] ram_addr,
 		output reg complete
@@ -27,8 +27,8 @@ module collision
 		if (~enable) begin
 			counter = 2'b00;
 			collision = Y_out > 5'd23 ? 1'b1 : 1'b0;
-			can_move_left = 1'b1;
-			can_move_right = 1'b1;
+			can_move_left = X_anchor > 1'd1 ? 1'b0 : 1'b1; // 0 means no collision, 1 means collision
+			can_move_right = X_anchor < 4'd10 ? 1'b0 : 1'b1;
 			ram_addr = ((Y_anchor + coord_y[1:0] + 1'b1) * 4'b1010) + X_anchor + coord_x[1:0];
 		end
 
