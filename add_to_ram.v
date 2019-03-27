@@ -13,7 +13,7 @@ module add_to_ram
     );
     
     reg [1:0] state; // the 3 states, setting up addr and data, enabling wren and disabling wren
-    reg [1:0] curr_block; // Which block we're currently storing
+    reg [2:0] curr_block; // Which block we're currently storing
     reg [4:0] curr_x;
     reg [5:0] curr_y; 
     
@@ -24,8 +24,9 @@ module add_to_ram
 
     always @(posedge clk) begin
         if (~enable) begin
-            curr_block <= 2'b00;
+            curr_block <= 3'b000;
             state <= 2'b00;
+				wren <= 1'b0;
         end
         else begin
             case (state) 
@@ -49,7 +50,7 @@ module add_to_ram
                             curr_y <= y_anc + y_offsets[7:6];
                         end
                     endcase
-                    curr_block <= curr_block + 2'b01;
+						  state <= 2'b01;
                 end
                 2'b01: begin
                     wren <= 1'b1;
@@ -58,20 +59,25 @@ module add_to_ram
                 2'b10: begin
                     wren <= 1'b0;
                     state <= 2'b00;
+						  curr_block <= curr_block + 3'b001;
                 end
+					 default: begin
+						curr_block <= 3'b001;
+						state <= 2'b00;
+					 end
             endcase
         end
     end
-
-    assign complete = block == 2'b11 && state == 2'b10; // We have looped through all 4 blocks and the 3 states
+	 
+	 assign complete = curr_block[2];
 endmodule
 
 module coord_to_addr
 	(
-		input [7:0] X,
-		input [6:0] Y,
+		input [4:0] X,
+		input [5:0] Y,
 		output [7:0] addr
 	);
 	
-	assign addr = Y * 4'd10 + X;
+	assign addr = Y * 7'd10 + X;
 endmodule

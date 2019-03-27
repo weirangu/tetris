@@ -15,15 +15,16 @@ module control
 		CLEAR_BOARD = 4'd0,
 		CLEAR_BOARD_WAIT = 4'd1,
 		GET_PIECE = 4'd2,
-		DETECT_COLLISION = 4'd3,
-		DETECT_COLLISION_WAIT = 4'd4,
-		SET_UP_RAM = 4'd5,
-		SETUP_ERASE_OLD = 4'd6,
-		ERASE_OLD = 4'd7,
-		SETUP_DRAW_NEW = 4'd8,
-		DRAW_NEW = 4'd9,
-		DRAW_NEW_WAIT = 4'd10,
-		WAIT = 4'd11;
+		GET_PIECE_WAIT = 4'd3,
+		DETECT_COLLISION = 4'd4,
+		DETECT_COLLISION_WAIT = 4'd5,
+		SET_UP_RAM = 4'd6,
+		SETUP_ERASE_OLD = 4'd7,
+		ERASE_OLD = 4'd8,
+		SETUP_DRAW_NEW = 4'd9,
+		DRAW_NEW = 4'd10,
+		DRAW_NEW_WAIT = 4'd11,
+		WAIT = 4'd12;
 		
 	localparam speed = 25'b0101111101011110000100000; // .5Hz
 
@@ -39,7 +40,7 @@ module control
 	reg [4:0] curr_anc_X;
 	reg [5:0] curr_anc_Y;
 	wire [4:0] new_anc_X;
-	wire [4:0] new_anc_Y;
+	wire [5:0] new_anc_Y;
 	reg [2:0] curr_piece;
 	reg [1:0] curr_rotation;
 	reg [2:0] piece_rng; // RNG for pieces
@@ -116,7 +117,8 @@ module control
 		case (curr_state)
 			CLEAR_BOARD: next_state = go ? CLEAR_BOARD_WAIT : CLEAR_BOARD;
 			CLEAR_BOARD_WAIT: next_state = go ? CLEAR_BOARD_WAIT: GET_PIECE;
-			GET_PIECE: next_state = DETECT_COLLISION; 
+			GET_PIECE: next_state = GET_PIECE_WAIT; 
+			GET_PIECE_WAIT : next_state = DETECT_COLLISION;
 			DETECT_COLLISION: next_state = module_complete[0] ? DETECT_COLLISION_WAIT : DETECT_COLLISION; 
 			DETECT_COLLISION_WAIT: next_state = collision ? SET_UP_RAM : SETUP_ERASE_OLD;
 			SET_UP_RAM: next_state = module_complete[3] ? GET_PIECE : SET_UP_RAM;
