@@ -5,10 +5,11 @@ module control
 		input clk,
 		input left,
 		input right,
-		output [7:0] X,
-		output [6:0] Y,
-		output [5:0] colour,
-		output reg writeEn
+		output reg [7:0] X,
+		output reg [6:0] Y,
+		output reg [5:0] colour,
+		output reg writeEn,
+		output reg [3:0] curr_state
 	);
 	
 	localparam
@@ -18,17 +19,18 @@ module control
 		GET_PIECE_WAIT = 4'd3,
 		DETECT_COLLISION = 4'd4,
 		DETECT_COLLISION_WAIT = 4'd5,
-		SET_UP_RAM = 4'd6,
+		WRITE_TO_RAM = 4'd6,
 		SETUP_ERASE_OLD = 4'd7,
 		ERASE_OLD = 4'd8,
 		SETUP_DRAW_NEW = 4'd9,
 		DRAW_NEW = 4'd10,
 		DRAW_NEW_WAIT = 4'd11,
-		WAIT = 4'd12;
+		DRAW_RAM = 4'd12,
+		WAIT = 4'd13;
 		
 	localparam speed = 25'b0101111101011110000100000; // .5Hz
 
-	reg [3:0] curr_state, next_state;
+	reg [3:0] /*curr_state,*/ next_state;
 	
 	// The following wires are wired into the RAM module
 	reg [7:0] ram_addr;
@@ -50,8 +52,8 @@ module control
 	
 	/* 0 is FALLING PIECE
 	*/
-	reg [3:0] module_select; // Determines which module we're currently using
-	wire [3:0] module_complete; // 1 on the clock cycle where the module finishes computation (and this is when the results can be used)
+	reg [4:0] module_select; // Determines which module we're currently using
+	wire [4:0] module_complete; // 1 on the clock cycle where the module finishes computation (and this is when the results can be used)
 	
 	// 0 is detect collision
 	// 1 is for draw piece
@@ -78,6 +80,9 @@ module control
 	);
 	
 	reg draw_clear;
+	wire [7:0] draw_x;
+	wire [6:0] draw_y;
+	wire [5:0] draw_colour;
 	draw_tetromino draw (
 		.enable(module_select[1]),
 		.block(curr_piece),
@@ -85,9 +90,9 @@ module control
 		.Y_in(Y_to_Draw),
 		.clear(draw_clear),
 		.clk(clk), 
-		.X_vga(X), 
-		.Y_vga(Y), 
-		.colour_out(colour),
+		.X_vga(draw_x), 
+		.Y_vga(draw_y), 
+		.colour_out(draw_colour),
 		.complete(module_complete[1])
 	);
 	
@@ -111,6 +116,23 @@ module control
 		.data(ram_in),
 		.complete(module_complete[3])
 	);
+	
+	wire [7:0] draw_ram_addr;
+	wire [7:0] draw_r_x;
+	wire [6:0] draw_r_y;
+	wire [5:0] draw_r_colour;
+	draw_ram draw_r(
+		.enable(module_select[4]),
+		.clk(clk),
+		.ram_Q(ram_out),
+		.X(draw_r_x),
+		.Y(draw_r_y),
+		.colour(draw_r_colour),
+		.ram_addr(draw_ram_addr),
+		.complete(module_complete[4])
+	);
+	
+	
 
 	always @(*)
    	begin: state_table
@@ -120,8 +142,9 @@ module control
 			GET_PIECE: next_state = GET_PIECE_WAIT; 
 			GET_PIECE_WAIT : next_state = DETECT_COLLISION;
 			DETECT_COLLISION: next_state = module_complete[0] ? DETECT_COLLISION_WAIT : DETECT_COLLISION; 
-			DETECT_COLLISION_WAIT: next_state = collision ? SET_UP_RAM : SETUP_ERASE_OLD;
-			SET_UP_RAM: next_state = module_complete[3] ? GET_PIECE : SET_UP_RAM;
+			DETECT_COLLISION_WAIT: next_state = collision ? WRITE_TO_RAM : SETUP_ERASE_OLD;
+			WRITE_TO_RAM: next_state = module_complete[3] ? DRAW_RAM : WRITE_TO_RAM;
+			DRAW_RAM: next_state = module_complete[4] ? GET_PIECE : DRAW_RAM;
 			SETUP_ERASE_OLD: next_state = ERASE_OLD;
 			ERASE_OLD: next_state = module_complete[1] ? SETUP_DRAW_NEW : ERASE_OLD;
 			SETUP_DRAW_NEW: next_state = DRAW_NEW;
@@ -140,6 +163,9 @@ module control
 		writeEn = 1'b0;
 		ram_addr = 8'b00000000;
 		draw_clear = 1'b1;
+		X = draw_x;
+		Y = draw_y;
+		colour = draw_colour;
 		case (curr_state)
 			CLEAR_BOARD: begin
 				// TODO
@@ -150,40 +176,52 @@ module control
 			end
 			DETECT_COLLISION: begin
 				ram_addr = collision_ram_addr;
-				module_select = 4'b0001;
+				module_select = 5'b00001;
 			end
 			DETECT_COLLISION_WAIT: begin
-				module_select = 4'b0001;
+				module_select = 5'b00001;
 			end
-			SET_UP_RAM: begin
+			WRITE_TO_RAM: begin
 				ram_addr = atr_ram_addr;
-				module_select = 4'b1000;
+				module_select = 5'b01000;
+			end
+			DRAW_RAM: begin
+				ram_addr = draw_ram_addr; 
+				module_select = 5'b10000;
+				X = draw_r_x;
+				Y = draw_r_y;
+				colour = draw_r_colour;
+				writeEn = 1'b1;
 			end
 			SETUP_ERASE_OLD: begin
 				X_to_Draw = curr_anc_X;
 				Y_to_Draw = curr_anc_Y;
-				module_select = 4'b0010; 
+				module_select = 5'b00010; 
 			end
 			ERASE_OLD: begin
 				X_to_Draw = curr_anc_X;
 				Y_to_Draw = curr_anc_Y;
+				X = draw_x;
+				Y = draw_y;
 				writeEn = 1'b1;
-				module_select = 4'b0010;
+				module_select = 5'b00010;
 			end
 			SETUP_DRAW_NEW: begin
 				X_to_Draw = new_anc_X;
 				Y_to_Draw = new_anc_Y;
-				module_select = 4'b0010;
+				module_select = 5'b00010;
 			end
 			DRAW_NEW: begin
 				X_to_Draw = new_anc_X;
 				Y_to_Draw = new_anc_Y;
 				draw_clear = 1'b0;
-				module_select = 4'b0010;
+				module_select = 5'b00010;
+				X = draw_x;
+				Y = draw_y;
 				writeEn = 1'b1;
 			end
 			DRAW_NEW_WAIT: begin
-				module_select = 4'b0100;
+				module_select = 5'b00100;
 			end
 		endcase
 	end

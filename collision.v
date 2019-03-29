@@ -30,7 +30,9 @@ module collision
 			collision = 1'b0;
 			collides_left = X_anchor > 1'd0 ? 1'b0 : 1'b1; // 0 means no collision, 1 means collision
 			collides_right = X_anchor < 4'd9 ? 1'b0 : 1'b1;
-			ram_addr = ((Y_anchor + coord_y[1:0] + 1'b1) * 4'b1010) + X_anchor + coord_x[1:0];
+			if (left) ram_addr = ((Y_anchor + coord_y[1:0]) * 7'b1010) + X_anchor + coord_x[1:0] - 1'b1;
+			else if (right) ram_addr = ((Y_anchor + coord_y[1:0]) * 7'b1010) + X_anchor + coord_x[1:0] + 1'b1;
+			else ram_addr = ((Y_anchor + coord_y[1:0] + 1'b1) * 7'b1010) + X_anchor + coord_x[1:0];
 		end
 
 		// Dealing with when the user want to move the piece left.
@@ -39,15 +41,15 @@ module collision
 				case (counter)
 					2'b00: begin
 						collides_left = collides_left | (|ram_Q);
-						ram_addr = ((Y_anchor + coord_y[3:2]) * 4'b1010) + X_anchor + coord_x[3:2] - 1'b1;
+						ram_addr = ((Y_anchor + coord_y[3:2]) * 7'b1010) + X_anchor + coord_x[3:2] - 1'b1;
 					end
 					2'b01: begin
 						collides_left = collides_left | (|ram_Q);
-						ram_addr = ((Y_anchor + coord_y[5:4] + 1'b1) * 4'b1010) + X_anchor + coord_x[5:4] - 1'b1;
+						ram_addr = ((Y_anchor + coord_y[5:4] + 1'b1) * 7'b1010) + X_anchor + coord_x[5:4] - 1'b1;
 					end
 					2'b10: begin
 						collides_left = collides_left | (|ram_Q);
-						ram_addr = ((Y_anchor + coord_y[7:6] + 1'b1) * 4'b1010) + X_anchor + coord_x[7:6] - 1'b1;
+						ram_addr = ((Y_anchor + coord_y[7:6] + 1'b1) * 7'b1010) + X_anchor + coord_x[7:6] - 1'b1;
 					end
 					2'b11: begin
 						collides_left = collides_left | (|ram_Q);
@@ -64,15 +66,15 @@ module collision
 				case (counter)
 					2'b00: begin
 						collides_right = collides_right | (|ram_Q) | (X_anchor + coord_x[3:2]) >= 4'd9;
-						ram_addr = ((Y_anchor + coord_y[3:2]) * 4'b1010) + X_anchor + coord_x[3:2] + 1'b1;
+						ram_addr = ((Y_anchor + coord_y[3:2]) * 7'b1010) + X_anchor + coord_x[3:2] + 1'b1;
 					end
 					2'b01: begin
 						collides_right = collides_right | (|ram_Q) | (X_anchor + coord_x[5:4]) >= 4'd9;
-						ram_addr = ((Y_anchor + coord_y[5:4] + 1'b1) * 4'b1010) + X_anchor + coord_x[5:4] + 1'b1;
+						ram_addr = ((Y_anchor + coord_y[5:4] + 1'b1) * 7'b1010) + X_anchor + coord_x[5:4] + 1'b1;
 					end
 					2'b10: begin
 						collides_right = collides_right | (|ram_Q) | (X_anchor + coord_x[7:6]) >= 4'd9;
-						ram_addr = ((Y_anchor + coord_y[7:6] + 1'b1) * 4'b1010) + X_anchor + coord_x[7:6] + 1'b1;
+						ram_addr = ((Y_anchor + coord_y[7:6] + 1'b1) * 7'b1010) + X_anchor + coord_x[7:6] + 1'b1;
 					end
 					2'b11: begin
 						collides_right = collides_right | (|ram_Q) | (X_anchor + coord_x[1:0]) >= 4'd9;
@@ -89,24 +91,25 @@ module collision
 			case (counter)
 				2'b00: begin
 					collision = collision | (|ram_Q) | (Y_anchor + coord_y[3:2]) > 5'd23;
-					ram_addr = ((Y_anchor + coord_y[3:2] + 1'b1) * 4'b1010) + X_anchor + coord_x[3:2];
+					ram_addr = ((Y_anchor + coord_y[3:2] + 1'b1) * 7'b1010) + X_anchor + coord_x[3:2];
 				end
 				2'b01: begin
 					collision = collision | (|ram_Q) | (Y_anchor + coord_y[5:4]) > 5'd23;
-					ram_addr = ((Y_anchor + coord_y[5:4] + 1'b1) * 4'b1010) + X_anchor + coord_x[5:4];
+					ram_addr = ((Y_anchor + coord_y[5:4] + 1'b1) * 7'b1010) + X_anchor + coord_x[5:4];
 				end
 				2'b10: begin
 					collision = collision | (|ram_Q) | (Y_anchor + coord_y[7:6]) > 5'd23;
-					ram_addr = ((Y_anchor + coord_y[7:6] + 1'b1) * 4'b1010) + X_anchor + coord_x[7:6];
+					ram_addr = ((Y_anchor + coord_y[7:6] + 1'b1) * 7'b1010) + X_anchor + coord_x[7:6];
 				end
 				2'b11: begin
 					collision = collision | (|ram_Q) | (Y_anchor + coord_y[1:0]) > 5'd23;
 					if (~move_horizontal) begin
 						Y_out = collision ? Y_anchor : Y_anchor + 1'b1;
+						X_out = X_anchor;
 					end else begin
 						Y_out = Y_anchor;
+						// X_out should already be set
 					end
-					X_out = X_anchor;
 					complete = 1'b1;
 				end
 			endcase

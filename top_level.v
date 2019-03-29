@@ -3,6 +3,7 @@ module top_level
 		CLOCK_50,	//	On Board 50 MHz
       	KEY,			// Keys
       	SW,			// Switches
+			LEDR,
 		VGA_CLK, 	//	VGA Clock
 		VGA_HS,		//	VGA H_SYNC
 		VGA_VS,		//	VGA V_SYNC
@@ -10,7 +11,9 @@ module top_level
 		VGA_SYNC_N,	//	VGA SYNC
 		VGA_R,   	//	VGA Red[9:0]
 		VGA_G,	 	//	VGA Green[9:0]
-		VGA_B   		//	VGA Blue[9:0]
+		VGA_B,   		//	VGA Blue[9:0]
+		PS2_CLK,
+		PS2_DAT
 	);
 
 	input	CLOCK_50;				//	50 MHz
@@ -25,6 +28,9 @@ module top_level
 	output [9:0] VGA_R;   				//	VGA Red[9:0]
 	output [9:0] VGA_G;	 				//	VGA Green[9:0]
 	output [9:0] VGA_B;   				//	VGA Blue[9:0]
+	inout PS2_CLK;
+	inout PS2_DAT;
+	output [9:0] LEDR;
 	
 	wire resetn;
 	assign resetn = KEY[0];
@@ -34,7 +40,10 @@ module top_level
 	wire [7:0] x;
 	wire [6:0] y;
 	wire writeEn;
-
+	
+	// Keyboard Wires
+	wire left,right;
+	
 	// Create an Instance of a VGA controller - there can be only one!
 	// Define the number of colours as well as the initial background
 	// image file (.MIF) for the controller.
@@ -58,15 +67,27 @@ module top_level
 		defparam VGA.BITS_PER_COLOUR_CHANNEL = 2;
 		defparam VGA.BACKGROUND_IMAGE = "bg.mif";
 		
-		control ctl(
-			.reset_n(resetn),
-			.go(KEY[1]),
-			.clk(CLOCK_50),
-			.left(!KEY[3]),
-			.right(!KEY[2]),
-			.X(x),
-			.Y(y),
-			.colour(colour),
-			.writeEn(writeEn)
-		);
+	// Keyboard module
+	keyboard_tracker #(.PULSE_OR_HOLD(0)) keyboard(
+			.clock(CLOCK_50),
+			.reset(resetn),
+			.PS2_CLK(PS2_CLK),
+			.PS2_DAT(PS2_DAT),
+			.a(left),
+			.d(right)
+	);
+			
+		
+	control ctl(
+		.reset_n(resetn),
+		.go(KEY[1]),
+		.clk(CLOCK_50),
+		.left(left),
+		.right(right),
+		.X(x),
+		.Y(y),
+		.colour(colour),
+		.writeEn(writeEn),
+		.curr_state(LEDR)
+	);
 endmodule
