@@ -17,7 +17,7 @@ module lut
 				end
 					 
 				else begin
-					X = 8'b10_10_10_10;
+					X = 8'b00_00_00_00;
 					Y = 8'b00_01_10_11;
 				end
 			end
@@ -29,7 +29,7 @@ module lut
 					Y = 8'b00_01_01_01;
 				end
 				else if (rotation == 2'b01) begin
-					X = 8'b01_01_01_10;
+					X = 8'b00_00_00_01;
 					Y = 8'b00_01_10_00;
 				end
 				else if (rotation == 2'b10) begin
@@ -51,7 +51,7 @@ module lut
 				end
 				
 				if (rotation == 2'b01) begin
-					X = 8'b01_01_01_10;
+					X = 8'b00_00_00_01;
 					Y = 8'b00_01_10_10;
 				end
 				
@@ -81,7 +81,7 @@ module lut
 				end
 				
 				else if (rotation == 2'b01) begin
-					X = 8'b01_01_10_10;
+					X = 8'b00_00_01_01;
 					Y = 8'b00_01_01_10;
 				end
 				
@@ -105,7 +105,7 @@ module lut
 				end
 				
 				else if (rotation == 2'b01) begin
-					X = 8'b01_01_01_10;
+					X = 8'b00_00_00_01;
 					Y = 8'b00_01_10_01;
 				end
 				
@@ -128,7 +128,7 @@ module lut
 				end
 				
 				else if (rotation == 2'b01) begin
-					X = 8'b01_01_10_10;
+					X = 8'b00_00_01_01;
 					Y = 8'b01_10_01_00;
 				end
 				
