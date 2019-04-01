@@ -9,35 +9,36 @@ module control
 		output reg [7:0] X,
 		output reg [6:0] Y,
 		output reg [5:0] colour,
-		output reg writeEn,
-		output reg [3:0] curr_state
+		output reg writeEn
 	);
 	
 	localparam
-		CLEAR_BOARD = 4'd0,
-		CLEAR_BOARD_WAIT = 4'd1,
-		GET_PIECE = 4'd2,
-		GET_PIECE_WAIT = 4'd3,
-		DETECT_COLLISION = 4'd4,
-		DETECT_COLLISION_WAIT = 4'd5,
-		WRITE_TO_RAM = 4'd6,
-		SETUP_ERASE_OLD = 4'd7,
-		ERASE_OLD = 4'd8,
-		SETUP_DRAW_NEW = 4'd9,
-		DRAW_NEW = 4'd10,
-		DRAW_NEW_WAIT = 4'd11,
-		DRAW_RAM = 4'd12,
-		ROTATE_PIECE = 4'd13,
-		WAIT = 4'd14;
+		CLEAR_BOARD = 5'd0,
+		CLEAR_BOARD_WAIT = 5'd1,
+		GET_PIECE = 5'd2,
+		GET_PIECE_WAIT = 5'd3,
+		DETECT_COLLISION = 5'd4,
+		DETECT_COLLISION_WAIT = 5'd5,
+		WRITE_TO_RAM = 5'd6,
+		SETUP_ERASE_OLD = 5'd7,
+		ERASE_OLD = 5'd8,
+		SETUP_DRAW_NEW = 5'd9,
+		DRAW_NEW = 5'd10,
+		DRAW_NEW_WAIT = 5'd11,
+		DRAW_RAM = 5'd12,
+		ROTATE_PIECE = 5'd13,
+		WAIT = 5'd14,
+		ROW_CLEAR = 5'd15;
 		
-	localparam speed = 25'b0101111101011110000100000; // .5Hz
+	localparam speed = /*25'b0101111101011110000100000*/ 25'd16; // .5Hz
 
-	reg [3:0] /*curr_state,*/ next_state;
+	reg [4:0] curr_state, next_state;
 	
 	// The following wires are wired into the RAM module
 	reg [7:0] ram_addr;
-	wire [5:0] ram_in, ram_out;
-	wire ram_wren;
+	reg [5:0] ram_in;
+	wire [5:0] ram_out;
+	reg ram_wren;
 	
 	ram_board board(ram_addr, clk, ram_in, ram_wren, ram_out);
 	
@@ -55,8 +56,8 @@ module control
 	
 	/* 0 is FALLING PIECE
 	*/
-	reg [4:0] module_select; // Determines which module we're currently using
-	wire [4:0] module_complete; // 1 on the clock cycle where the module finishes computation (and this is when the results can be used)
+	reg [7:0] module_select; // Determines which module we're currently using
+	wire [7:0] module_complete; // 1 on the clock cycle where the module finishes computation (and this is when the results can be used)
 	
 	// 0 is detect collision
 	// 1 is for draw piece
@@ -109,6 +110,8 @@ module control
 	);
 
 	wire [7:0] atr_ram_addr;
+	wire [5:0] atr_ram_data;
+	wire atr_ram_wren;
 	add_to_ram atr(
 		.enable(module_select[3]),
 		.x_anc(new_anc_X),
@@ -117,8 +120,8 @@ module control
 		.rotation(curr_rotation),
 		.clk(clk),
 		.ram_addr(atr_ram_addr),
-		.wren(ram_wren),
-		.data(ram_in),
+		.wren(atr_ram_wren),
+		.data(atr_ram_data),
 		.complete(module_complete[3])
 	);
 	
@@ -126,7 +129,7 @@ module control
 	wire [7:0] draw_r_x;
 	wire [6:0] draw_r_y;
 	wire [5:0] draw_r_colour;
-	draw_ram draw_r(
+	draw_ram draw_r (
 		.enable(module_select[4]),
 		.clk(clk),
 		.ram_Q(ram_out),
@@ -136,6 +139,19 @@ module control
 		.ram_addr(draw_ram_addr),
 		.complete(module_complete[4])
 	);
+	
+	wire [7:0] clr_ram_addr;
+	wire [5:0] clr_ram_data;
+	wire clr_ram_wren;
+	row_clear rowclr (
+        .enable(module_select[5]),
+        .clk(clk),
+        .ram_Q(ram_out),
+        .ram_addr(clr_ram_addr), 
+        .ram_data(clr_ram_data),
+        .ram_wren(clr_ram_wren),
+        .complete(module_complete[5])
+    );
 
 	always @(*)
    	begin: state_table
@@ -154,7 +170,8 @@ module control
 			end
 			DETECT_COLLISION_WAIT: next_state = collision ? WRITE_TO_RAM : SETUP_ERASE_OLD;
 			ROTATE_PIECE: next_state = DETECT_COLLISION;
-			WRITE_TO_RAM: next_state = module_complete[3] ? DRAW_RAM : WRITE_TO_RAM;
+			WRITE_TO_RAM: next_state = module_complete[3] ? ROW_CLEAR : WRITE_TO_RAM;
+			ROW_CLEAR: next_state = module_complete[5] ? DRAW_RAM : ROW_CLEAR;
 			DRAW_RAM: next_state = module_complete[4] ? GET_PIECE : DRAW_RAM;
 			SETUP_ERASE_OLD: next_state = ERASE_OLD;
 			ERASE_OLD: next_state = module_complete[1] ? SETUP_DRAW_NEW : ERASE_OLD;
@@ -170,13 +187,15 @@ module control
 		// Setting default values for all these signals
 		X_to_Draw = 3'b000;
 		Y_to_Draw = 3'b000;
-		module_select = 4'b0000;
+		module_select = 8'b00000000;
 		writeEn = 1'b0;
 		ram_addr = 8'b00000000;
 		draw_clear = 1'b1;
 		X = draw_x;
 		Y = draw_y;
 		colour = draw_colour;
+		ram_in = 6'b000000;
+		ram_wren = 1'b0;
 		case (curr_state)
 			CLEAR_BOARD: begin
 				// TODO
@@ -185,20 +204,28 @@ module control
 			end
 			DETECT_COLLISION: begin
 				ram_addr = collision_ram_addr;
-				module_select = 5'b00001;
+				module_select = 8'b00000001;
 			end
 			DETECT_COLLISION_WAIT: begin
-				module_select = 5'b00001;
+				module_select = 8'b00000001;
 			end
 			ROTATE_PIECE: begin
 			end
 			WRITE_TO_RAM: begin
 				ram_addr = atr_ram_addr;
-				module_select = 5'b01000;
+				ram_in = atr_ram_data;
+				ram_wren = atr_ram_wren;
+				module_select = 8'b00001000;
+			end
+			ROW_CLEAR: begin
+				ram_addr = clr_ram_addr;
+				ram_in = clr_ram_data;
+				ram_wren = clr_ram_wren;
+				module_select = 8'b00100000;
 			end
 			DRAW_RAM: begin
 				ram_addr = draw_ram_addr; 
-				module_select = 5'b10000;
+				module_select = 8'b00010000;
 				X = draw_r_x;
 				Y = draw_r_y;
 				colour = draw_r_colour;
@@ -207,7 +234,7 @@ module control
 			SETUP_ERASE_OLD: begin
 				X_to_Draw = curr_anc_X;
 				Y_to_Draw = curr_anc_Y;
-				module_select = 5'b00010; 
+				module_select = 8'b00000010; 
 			end
 			ERASE_OLD: begin
 				X_to_Draw = curr_anc_X;
@@ -215,24 +242,24 @@ module control
 				X = draw_x;
 				Y = draw_y;
 				writeEn = 1'b1;
-				module_select = 5'b00010;
+				module_select = 8'b00000010;
 			end
 			SETUP_DRAW_NEW: begin
 				X_to_Draw = new_anc_X;
 				Y_to_Draw = new_anc_Y;
-				module_select = 5'b00010;
+				module_select = 8'b00000010;
 			end
 			DRAW_NEW: begin
 				X_to_Draw = new_anc_X;
 				Y_to_Draw = new_anc_Y;
 				draw_clear = 1'b0;
-				module_select = 5'b00010;
+				module_select = 8'b00000010;
 				X = draw_x;
 				Y = draw_y;
 				writeEn = 1'b1;
 			end
 			DRAW_NEW_WAIT: begin
-				module_select = 5'b00100;
+				module_select = 8'b00000100;
 			end
 		endcase
 	end
@@ -267,6 +294,7 @@ module control
 				// Reset X and Y back to the top
 				curr_piece <= piece_rng;
 				curr_rotation <= 2'b00;
+				new_rotation <= 2'b00;
 				curr_anc_X <= 4'd4;
 				curr_anc_Y <= 1'd0;
 			end

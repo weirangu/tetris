@@ -3,8 +3,8 @@ module draw_ram
 		input enable,	// Whether this module should be enabled (on posedge this resets)
 		input clk,
 		input [5:0] ram_Q,	// RAM input
-		output [7:0] X,
-		output [6:0] Y,
+		output reg [7:0] X,
+		output reg [6:0] Y,
 		output [5:0] colour,
 		output [7:0] ram_addr,
 		output complete	// 1 when this is finished drawing (if we're using this as a wren signal, we should invert it)
@@ -25,6 +25,8 @@ module draw_ram
 			offset <= 4'b0000;
 			board_location_x <= 4'b0000;
 			board_location_y <= 5'b00000; // We want to start drawing (0, 4) first, because the top 4 arrays are supposed to be invisible
+			X <= X_START;
+			Y <= Y_START;
 		end
 		else begin
 			if (offset == 4'b1111) begin
@@ -40,12 +42,12 @@ module draw_ram
 				end
 			end
 			offset <= offset + 1'b1;
+			X <= (board_location_x * 7'd4) + X_START + offset[1:0];
+			Y <= (board_location_y * 6'd4) + Y_START + offset[3:2];
 		end
 	end
-	
-	assign X = (board_location_x * 7'd4) + X_START + offset[1:0];
-	assign Y = (board_location_y * 6'd4) + Y_START + offset[3:2];
-	assign complete = (board_location_x == 4'b0000) && (board_location_y == 5'b11000);
+
+	assign complete = (board_location_x == 4'b0000) && (board_location_y == 5'b11001);
 endmodule
 
 module draw_tetromino
