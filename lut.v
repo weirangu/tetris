@@ -119,17 +119,12 @@ module lut
 					Y = 8'b01_00_01_10;
 				end
 			end
+
 			3'b110: begin
-				X = 8'b00_01_01_10;
-				Y = 8'b00_00_01_01;
 				colour = 6'b11_00_00;
-			end
-			
-			default: begin
-				colour = 6'b00_11_11;
 				if (rotation == 2'b00) begin
-					X = 8'b00_01_10_11;
-					Y = 8'b00_00_00_00;
+					X = 8'b00_01_01_10;
+					Y = 8'b00_00_01_01;
 				end
 				
 				else if (rotation == 2'b01) begin
@@ -146,6 +141,10 @@ module lut
 					X = 8'b00_00_01_01;
 					Y = 8'b10_01_01_00;
 				end
+			end
+			
+			default: begin
+				colour = 6'b00_11_11;
 			end
 		endcase
 	end

@@ -246,7 +246,7 @@ module control
 		end
 		else begin
 			curr_state <= next_state;
-			if (piece_rng < 3'b111) piece_rng <= piece_rng + 1'b1;
+			if (piece_rng < 3'b110) piece_rng <= piece_rng + 1'b1;
 			else piece_rng <= 3'b000;
 			
 			
