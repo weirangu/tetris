@@ -17,11 +17,10 @@ module collision
 	);
 	
 	reg [1:0] counter; // A counter for the clock, for us to check the 4 blocks of a tetromino
-	wire [5:0] colour;
 	wire [7:0] coord_x, coord_y; // The offsets of the block
 	reg collides_left, collides_right, move_horizontal; // This signal determines whether a piece can move left/right.
 
-	lut b(block, curr_rotation, coord_x, coord_y, colour);
+	lut b(block, curr_rotation, coord_x, coord_y);
 	
 	always @(posedge clk) begin
 		complete = 1'b0;
