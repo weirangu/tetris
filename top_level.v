@@ -42,7 +42,7 @@ module top_level
 	wire writeEn;
 	
 	// Keyboard Wires
-	wire left,right;
+	wire left,right,rotate;
 	
 	// Create an Instance of a VGA controller - there can be only one!
 	// Define the number of colours as well as the initial background
@@ -74,9 +74,9 @@ module top_level
 			.PS2_CLK(PS2_CLK),
 			.PS2_DAT(PS2_DAT),
 			.a(left),
-			.d(right)
+			.d(right),
+			.space(rotate)
 	);
-			
 		
 	control ctl(
 		.reset_n(resetn),
@@ -84,6 +84,7 @@ module top_level
 		.clk(CLOCK_50),
 		.left(left),
 		.right(right),
+		.rotate(rotate),
 		.X(x),
 		.Y(y),
 		.colour(colour),

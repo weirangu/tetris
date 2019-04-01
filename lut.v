@@ -10,44 +10,142 @@ module lut
 	always @(*) begin
 		case (block)
 			3'b000: begin
-				X = 8'b00_01_10_11;
-				Y = 8'b00_00_00_00;
 				colour = 6'b00_11_11;
+				if (rotation == 2'b00 || rotation == 2'b10) begin
+					X = 8'b00_01_10_11;
+					Y = 8'b00_00_00_00;
+				end
+					 
+				else begin
+					X = 8'b10_10_10_10;
+					Y = 8'b00_01_10_11;
+				end
 			end
+			
 			3'b001: begin
-				X = 8'b00_00_01_10;
-				Y = 8'b00_01_01_01;
 				colour = 6'b00_00_11;
+				if (rotation == 2'b00) begin
+					X = 8'b00_00_01_10;
+					Y = 8'b00_01_01_01;
+				end
+				else if (rotation == 2'b01) begin
+					X = 8'b01_01_01_10;
+					Y = 8'b00_01_10_00;
+				end
+				else if (rotation == 2'b10) begin
+					X = 8'b00_01_10_10;
+					Y = 8'b01_01_01_10;
+				end
+				else begin
+					X = 8'b00_01_01_01;
+					Y = 8'b10_10_01_00;
+				end
 			end
+			
 			3'b010: begin
-				X = 8'b00_01_10_10;
-				Y = 8'b01_01_01_00;
 				colour = 6'b11_10_00;
+				
+				if (rotation == 2'b00) begin
+					X = 8'b00_01_10_10;
+					Y = 8'b01_01_01_00;
+				end
+				
+				if (rotation == 2'b01) begin
+					X = 8'b01_01_01_10;
+					Y = 8'b00_01_10_10;
+				end
+				
+				if (rotation == 2'b10) begin
+					X = 8'b00_00_01_10;
+					Y = 8'b10_01_01_01; // may be a problem
+				end
+				
+				else begin
+					X = 8'b00_01_01_01;
+					Y = 8'b00_00_01_10;
+				end
 			end
+			
+			// The Square
 			3'b011: begin
 				X = 8'b00_01_00_01;
 				Y = 8'b00_00_01_01;
 				colour = 6'b11_11_00;
 			end
+			
 			3'b100: begin
-				X = 8'b00_01_01_10;
-				Y = 8'b01_01_00_00;
 				colour = 6'b00_11_00;
+				if (rotation == 2'b00) begin
+					X = 8'b00_01_01_10;
+					Y = 8'b01_01_00_00;
+				end
+				
+				else if (rotation == 2'b01) begin
+					X = 8'b01_01_10_10;
+					Y = 8'b00_01_01_10;
+				end
+				
+				else if (rotation == 2'b10) begin
+					X = 8'b00_01_01_10;
+					Y = 8'b10_10_01_01;
+				end
+				
+				else begin
+					X = 8'b00_00_01_01;
+					Y = 8'b00_01_01_10;
+				end	
 			end
+			
+			
 			3'b101: begin
-				X = 8'b00_01_01_10;
-				Y = 8'b01_01_00_01;
 				colour = 6'b11_00_11;
+				if (rotation == 2'b00) begin
+					X = 8'b00_01_01_10;
+					Y = 8'b01_01_00_01;
+				end
+				
+				else if (rotation == 2'b01) begin
+					X = 8'b01_01_01_10;
+					Y = 8'b00_01_10_01;
+				end
+				
+				else if (rotation == 2'b10) begin
+					X = 8'b00_01_01_10;
+					Y = 8'b01_01_10_01;
+				end
+				
+				else begin
+					X = 8'b00_01_01_01;
+					Y = 8'b01_00_01_10;
+				end
 			end
 			3'b110: begin
 				X = 8'b00_01_01_10;
 				Y = 8'b00_00_01_01;
 				colour = 6'b11_00_00;
 			end
+			
 			default: begin
-				X = 8'b00_01_10_11;
-				Y = 8'b00_00_00_00;
 				colour = 6'b00_11_11;
+				if (rotation == 2'b00) begin
+					X = 8'b00_01_10_11;
+					Y = 8'b00_00_00_00;
+				end
+				
+				else if (rotation == 2'b01) begin
+					X = 8'b01_01_10_10;
+					Y = 8'b01_10_01_00;
+				end
+				
+				else if (rotation == 2'b10) begin
+					X = 8'b00_01_01_10;
+					Y = 8'b01_01_10_10;
+				end
+				
+				else begin
+					X = 8'b00_00_01_01;
+					Y = 8'b10_01_01_00;
+				end
 			end
 		endcase
 	end

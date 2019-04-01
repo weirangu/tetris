@@ -4,6 +4,7 @@ module collision
 		input [4:0] X_anchor,
 		input [5:0] Y_anchor,
 		input [2:0] block,
+		input [1:0] curr_rotation,
 		input left,
 		input right,
 		input clk,
@@ -20,7 +21,7 @@ module collision
 	wire [7:0] coord_x, coord_y; // The offsets of the block
 	reg collides_left, collides_right, move_horizontal; // This signal determines whether a piece can move left/right.
 
-	lut b(block, 2'b00, coord_x, coord_y, colour);
+	lut b(block, curr_rotation, coord_x, coord_y, colour);
 	
 	always @(posedge clk) begin
 		complete = 1'b0;
@@ -85,7 +86,6 @@ module collision
 					end
 				endcase
 			end
-
 		// Dealing with when the block is falling down i.e. no left/right.
 		//else begin
 			case (counter)

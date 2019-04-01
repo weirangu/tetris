@@ -52,6 +52,7 @@ module draw_tetromino
 	(
 		input enable,
 		input [2:0] block,
+		input [1:0] rotation,
 		input [4:0] X_in,
 		input [5:0] Y_in,
 		input clear, // Determines whether we're clearing or not
@@ -70,7 +71,7 @@ module draw_tetromino
 	
 	wire [7:0] coord_x, coord_y;
 	wire [5:0] blk_colour;
-	lut b(block, 2'b00, coord_x, coord_y, blk_colour);
+	lut b(block, rotation, coord_x, coord_y, blk_colour);
 	assign colour_out = clear ? 6'b000000 : blk_colour;
 	
 	reg [6:0] counter;
