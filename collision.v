@@ -40,19 +40,19 @@ module collision
 			if (left) begin
 				case (counter)
 					2'b00: begin
-						collides_left = collides_left | (|ram_Q);
+						collides_left = collides_left | (|ram_Q) | (X_anchor + coord_x[3:2]) <= 4'd0;
 						ram_addr = ((Y_anchor + coord_y[3:2]) * 7'b1010) + X_anchor + coord_x[3:2] - 1'b1;
 					end
 					2'b01: begin
-						collides_left = collides_left | (|ram_Q);
+						collides_left = collides_left | (|ram_Q) | (X_anchor + coord_x[3:2]) <= 4'd0;
 						ram_addr = ((Y_anchor + coord_y[5:4] + 1'b1) * 7'b1010) + X_anchor + coord_x[5:4] - 1'b1;
 					end
 					2'b10: begin
-						collides_left = collides_left | (|ram_Q);
+						collides_left = collides_left | (|ram_Q) | (X_anchor + coord_x[3:2]) <= 4'd0;
 						ram_addr = ((Y_anchor + coord_y[7:6] + 1'b1) * 7'b1010) + X_anchor + coord_x[7:6] - 1'b1;
 					end
 					2'b11: begin
-						collides_left = collides_left | (|ram_Q);
+						collides_left = collides_left | (|ram_Q) | (X_anchor + coord_x[3:2]) <= 4'd0;
 						// Y_out = collides_left ? Y_anchor + 1'b1 : Y_anchor;  // We want to move down if can't move left.
 						X_out = collides_left == 1'b0 ? X_anchor - 1'b1 : X_anchor;
 						move_horizontal = ~collides_left;
