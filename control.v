@@ -20,15 +20,16 @@ module control
 		GET_PIECE_WAIT = 4'd3,
 		DETECT_COLLISION = 4'd4,
 		DETECT_COLLISION_WAIT = 4'd5,
-		WRITE_TO_RAM = 4'd6,
-		SETUP_ERASE_OLD = 4'd7,
-		ERASE_OLD = 4'd8,
-		SETUP_DRAW_NEW = 4'd9,
-		DRAW_NEW = 4'd10,
-		DRAW_NEW_WAIT = 4'd11,
-		DRAW_RAM = 4'd12,
-		ROTATE_PIECE = 4'd13,
-		WAIT = 4'd14;
+		CHECK_ROTATION = 4'd6,
+		ROTATE_PIECE = 4'd7,
+		WRITE_TO_RAM = 4'd8,
+		SETUP_ERASE_OLD = 4'd9,
+		ERASE_OLD = 4'd10,
+		SETUP_DRAW_NEW = 4'd11,
+		DRAW_NEW = 4'd12,
+		DRAW_NEW_WAIT = 4'd13,
+		DRAW_RAM = 4'd14,
+		WAIT = 4'd15;
 		
 	localparam speed = 25'b0101111101011110000100000; // .5Hz
 
@@ -146,13 +147,14 @@ module control
 			GET_PIECE_WAIT : next_state = DETECT_COLLISION;
 			DETECT_COLLISION: begin
 				if (rotate) 
-					next_state = ROTATE_PIECE;
+					next_state = CHECK_ROTATION;
 				else if (module_complete[0]) 
 					next_state = DETECT_COLLISION_WAIT;
 				else
 					next_state = DETECT_COLLISION;
 			end
 			DETECT_COLLISION_WAIT: next_state = collision ? WRITE_TO_RAM : SETUP_ERASE_OLD;
+			CHECK_ROTATION: next_state = ROTATE_PIECE;
 			ROTATE_PIECE: next_state = DETECT_COLLISION;
 			WRITE_TO_RAM: next_state = module_complete[3] ? DRAW_RAM : WRITE_TO_RAM;
 			DRAW_RAM: next_state = module_complete[4] ? GET_PIECE : DRAW_RAM;
@@ -190,7 +192,7 @@ module control
 			DETECT_COLLISION_WAIT: begin
 				module_select = 5'b00001;
 			end
-			ROTATE_PIECE: begin
+			CHECK_ROTATION: begin
 			end
 			WRITE_TO_RAM: begin
 				ram_addr = atr_ram_addr;
@@ -248,9 +250,7 @@ module control
 			curr_state <= next_state;
 			if (piece_rng < 3'b110) piece_rng <= piece_rng + 1'b1;
 			else piece_rng <= 3'b000;
-			
-			
-			if (curr_state == ROTATE_PIECE) begin
+			if (curr_state == CHECK_ROTATION) begin
 				new_rotation <= curr_rotation + 1'b1;
 			end
 			
