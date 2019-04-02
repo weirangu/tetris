@@ -13,9 +13,13 @@ module row_clear
     reg has_empty_blk;  // Whether the current Y that we're checking has an empty block
 
     // Used for shifting the rows down
-    reg sd_enable, sd_complete, sd_ram_wren;
-    reg [7:0] sd_ram_addr;
-    reg [5:0] sd_ram_data;
+    reg sd_enable;
+	 wire sd_complete, sd_ram_wren;
+    wire [7:0] sd_ram_addr;
+    wire [5:0] sd_ram_data;
+	 // Used for checking the rows
+    wire [7:0] check_ram_addr;
+    reg [5:0] check_ram_data;
     shift_down sd (
         .enable(sd_enable),
         .end_addr(check_ram_addr),
@@ -27,10 +31,6 @@ module row_clear
         .complete(sd_complete)
     );
 
-    // Used for checking the rows
-    reg [7:0] check_ram_addr;
-    reg [5:0] check_ram_data;
-
     coord_to_addr read (
         .X(curr_x),
         .Y(curr_y),
@@ -39,8 +39,8 @@ module row_clear
 
     always @(posedge clk) begin
         if (~enable) begin
-            curr_y <= 6'd24;
-            curr_x <= 5'd10;
+            curr_y <= 6'd23;
+            curr_x <= 5'd0;
             has_empty_blk <= 1'b0;
             complete <= 1'b0;
             ram_addr <= check_ram_addr;
@@ -58,6 +58,7 @@ module row_clear
                         // We don't modify curr_y because we don't need to, 
                         // the rows are shifted down so we can still test this row
                         curr_x <= 5'd0;
+								curr_y <= curr_y - 1'b1;
                         sd_enable <= 1'b0;
                         has_empty_blk <= 1'b0;
                     end else begin
@@ -71,7 +72,7 @@ module row_clear
                 end
             end else begin
                 // Let's check the current x values
-                has_empty_blk <= has_empty_blk || ram_Q;
+                has_empty_blk <= has_empty_blk || (ram_Q == 6'b000000);
 
                 // Setup RAM for next read
                 curr_x <= curr_x + 1'b1;
@@ -90,7 +91,7 @@ module shift_down
         input clk,
         input [5:0] ram_Q,
         output reg [7:0] ram_addr, 
-        output reg [7:0] ram_data, 
+        output reg [5:0] ram_data, 
         output reg ram_wren,
         output reg complete
     );
@@ -101,26 +102,23 @@ module shift_down
         WRITE = 3'b011,
         WRITE_END = 3'b100;
 
-    reg [7:0] counter; // Keeps track of which module we're currently writing
-    reg [5:0] temp_data;
-    reg [2:0] curr_state, next_state;
+    reg [7:0] counter; // Keeps track of which block we're currently writing
+    reg [2:0] curr_state;
 
     always @(posedge clk) begin
         if (~enable) begin
-            counter <= end_addr - 7'd10;
+            counter <= end_addr - 7'd11;
             ram_wren <= 1'b0;
             ram_addr <= 8'd0;
             ram_data <= 6'd0;
-            complete <= 1'd0;
+            complete <= 1'b0;
+				curr_state <= READ_PREP;
         end
         else begin
             case (curr_state)
-                READ_PREP: ram_addr <= end_addr;
-                READ: temp_data <= ram_Q;
-                WRITE_PREP: begin 
-                    ram_data <= temp_data;
-                    ram_addr <= counter + 7'd10;
-                end
+                READ_PREP: ram_addr <= counter;
+                READ: ram_data <= ram_Q;
+                WRITE_PREP: ram_addr <= counter + 8'd10;
                 WRITE: ram_wren <= 1'b1;
                 WRITE_END: begin
                     ram_wren <= 1'b0;
@@ -128,7 +126,7 @@ module shift_down
                     else counter <= counter - 8'd1;
                 end
             endcase
-            curr_state <= curr_state + 1'd1;
+            curr_state <= curr_state == WRITE_END ? 3'b000 : curr_state + 1'd1;
         end
     end
 endmodule

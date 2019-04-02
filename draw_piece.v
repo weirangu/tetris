@@ -13,18 +13,18 @@ module draw_ram
 		X_START = 8'b00000000,
 		Y_START = 7'b0000000;
 		
+	reg [4:0] board_location_x;	// Which part of the board we're in (for x)
+	reg [5:0] board_location_y;	// Which part of the board we're in (for y)
+	reg [3:0] offset;	// Which part of the square we're drawing, [1:0] is the x, [3:2] is the y
+		
 	coord_to_addr coord(board_location_x, board_location_y, ram_addr); // Converts the X, Y coordinates we have into an address that we can use for the RAM
 	assign colour = ram_Q; // We draw the colour given to us by the RAM
-
-	reg [3:0] board_location_x;	// Which part of the board we're in (for x)
-	reg [4:0] board_location_y;	// Which part of the board we're in (for y)
-	reg [3:0] offset;	// Which part of the square we're drawing, [1:0] is the x, [3:2] is the y
 
 	always @(posedge clk) begin
 		if (~enable) begin
 			offset <= 4'b0000;
-			board_location_x <= 4'b0000;
-			board_location_y <= 5'b00000; // We want to start drawing (0, 4) first, because the top 4 arrays are supposed to be invisible
+			board_location_x <= 5'b0000;
+			board_location_y <= 6'b00000; // We want to start drawing (0, 4) first, because the top 4 arrays are supposed to be invisible
 			X <= X_START;
 			Y <= Y_START;
 		end
@@ -47,7 +47,7 @@ module draw_ram
 		end
 	end
 
-	assign complete = (board_location_x == 4'b0000) && (board_location_y == 5'b11001);
+	assign complete = (board_location_x == 5'b0000) && (board_location_y == 6'b011001);
 endmodule
 
 module draw_tetromino

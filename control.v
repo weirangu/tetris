@@ -17,7 +17,7 @@ module control
 		START_WAIT = 5'd1,
 		GET_PIECE = 5'd2,
 		GET_PIECE_WAIT = 5'd3,
-		DETECT_COLLISION = 5'd5,
+		DETECT_COLLISION = 5'd4,
 		DETECT_COLLISION_WAIT = 5'd5,
 		CHECK_ROTATION = 5'd6,
 		ROTATE_PIECE = 5'd7,
@@ -31,7 +31,7 @@ module control
 		ROW_CLEAR = 5'd15,
 		BOARD_CLEAR = 5'd16;
 		
-	localparam speed = /*25'b0101111101011110000100000*/ 25'd16; // .5Hz
+	localparam speed = 25'b0101111101011110000100000; // .5Hz
 
 	reg [4:0] curr_state, next_state;
 	
@@ -181,7 +181,7 @@ module control
 		.wren(clr_board_wren),
 		.data(clr_board_data),
 		.complete(module_complete[7])
-	)
+	);
 
 	always @(*)
    	begin: state_table
@@ -208,7 +208,7 @@ module control
 					else next_state = DETECT_COLLISION;
 				end
 				else next_state = CHECK_ROTATION;
-
+			end
 			ROTATE_PIECE: next_state = DETECT_COLLISION;
 			WRITE_TO_RAM: next_state = module_complete[3] ? ROW_CLEAR : WRITE_TO_RAM;
 			ROW_CLEAR: next_state = module_complete[5] ? DRAW_RAM : ROW_CLEAR;
@@ -218,8 +218,8 @@ module control
 			SETUP_DRAW_NEW: next_state = DRAW_NEW;
 			DRAW_NEW: next_state = module_complete[1] ? DRAW_NEW_WAIT : DRAW_NEW;
 			DRAW_NEW_WAIT: next_state = module_complete[2] ? DETECT_COLLISION : DRAW_NEW_WAIT;
-			BOARD_CLEAR: next_state = module_complete[7] ? START : BOARD_CLEAR;
-			default: next_state = GET_PIECE;
+			BOARD_CLEAR: next_state = module_complete[7] ? DRAW_RAM : BOARD_CLEAR;
+			default: next_state = BOARD_CLEAR;
 		endcase
    end // state_table
 

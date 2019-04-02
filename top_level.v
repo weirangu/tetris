@@ -88,7 +88,6 @@ module top_level
 		.X(x),
 		.Y(y),
 		.colour(colour),
-		.writeEn(writeEn),
-		.curr_state(LEDR)
+		.writeEn(writeEn)
 	);
 endmodule

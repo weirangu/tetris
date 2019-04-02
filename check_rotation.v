@@ -22,7 +22,7 @@ module check_rotation
 		if (~enable) begin
 			counter = 2'b00;
 			rotate_collides = 1'b0;
-			else ram_addr = ((Y_anchor + coord_y[1:0]) * 7'b1010) + X_anchor + coord_x[1:0];
+			ram_addr = ((Y_anchor + coord_y[1:0]) * 7'b1010) + X_anchor + coord_x[1:0];
 		end
 
 		// Dealing with when the user want to move the piece left.
@@ -33,15 +33,15 @@ module check_rotation
 					ram_addr = ((Y_anchor + coord_y[3:2]) * 7'b1010) + X_anchor + coord_x[3:2];
 				end
 				2'b01: begin
-					rotate_collides = rotate_collides | (|ram_Q) | (Y_anchor + coord_y[5:4]) > 5'd23 | (X_anchor + coord_x[3:2]) >= 4'd9 | (X_anchor + coord_x[3:2]) <= 4'd0;
+					rotate_collides = rotate_collides | (|ram_Q) | (Y_anchor + coord_y[5:4]) > 5'd23 | (X_anchor + coord_x[5:4]) >= 4'd9 | (X_anchor + coord_x[5:4]) <= 4'd0;
 					ram_addr = ((Y_anchor + coord_y[5:4]) * 7'b1010) + X_anchor + coord_x[5:4];
 				end
 				2'b10: begin
-					rotate_collides = rotate_collides | (|ram_Q) | (Y_anchor + coord_y[7:6]) > 5'd23 | (X_anchor + coord_x[3:2]) >= 4'd9 | (X_anchor + coord_x[3:2]) <= 4'd0;
+					rotate_collides = rotate_collides | (|ram_Q) | (Y_anchor + coord_y[7:6]) > 5'd23 | (X_anchor + coord_x[7:6]) >= 4'd9 | (X_anchor + coord_x[7:6]) <= 4'd0;
 					ram_addr = ((Y_anchor + coord_y[7:6]) * 7'b1010) + X_anchor + coord_x[7:6];
 				end
 				2'b11: begin
-					rotate_collides = rotate_collides | (|ram_Q) | (Y_anchor + coord_y[1:0]) > 5'd23 | (X_anchor + coord_x[3:2]) >= 4'd9 | (X_anchor + coord_x[3:2]) <= 4'd0;
+					rotate_collides = rotate_collides | (|ram_Q) | (Y_anchor + coord_y[1:0]) > 5'd23 | (X_anchor + coord_x[1:0]) >= 4'd9 | (X_anchor + coord_x[1:0]) <= 4'd0;
 					complete = 1'b1;
 				end
 			endcase
