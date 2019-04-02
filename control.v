@@ -13,22 +13,23 @@ module control
 	);
 	
 	localparam
-		CLEAR_BOARD = 4'd0,
-		CLEAR_BOARD_WAIT = 4'd1,
-		GET_PIECE = 4'd2,
-		GET_PIECE_WAIT = 4'd3,
-		DETECT_COLLISION = 4'd4,
-		DETECT_COLLISION_WAIT = 4'd5,
-		CHECK_ROTATION = 4'd6,
-		ROTATE_PIECE = 4'd7,
-		WRITE_TO_RAM = 4'd8,
-		SETUP_ERASE_OLD = 4'd9,
-		ERASE_OLD = 4'd10,
-		SETUP_DRAW_NEW = 4'd11,
-		DRAW_NEW = 4'd12,
-		DRAW_NEW_WAIT = 4'd13,
-		DRAW_RAM = 4'd14,
-		ROW_CLEAR = 4'd15;
+		START = 5'd0,
+		START_WAIT = 5'd1,
+		GET_PIECE = 5'd2,
+		GET_PIECE_WAIT = 5'd3,
+		DETECT_COLLISION = 5'd5,
+		DETECT_COLLISION_WAIT = 5'd5,
+		CHECK_ROTATION = 5'd6,
+		ROTATE_PIECE = 5'd7,
+		WRITE_TO_RAM = 5'd8,
+		SETUP_ERASE_OLD = 5'd9,
+		ERASE_OLD = 5'd10,
+		SETUP_DRAW_NEW = 5'd11,
+		DRAW_NEW = 5'd12,
+		DRAW_NEW_WAIT = 5'd13,
+		DRAW_RAM = 5'd14,
+		ROW_CLEAR = 5'd15,
+		BOARD_CLEAR = 5'd16;
 		
 	localparam speed = /*25'b0101111101011110000100000*/ 25'd16; // .5Hz
 
@@ -64,6 +65,7 @@ module control
 	// 2 is for rate divider
 	// 3 is for adding to ram
 	// 6 is for check rotation
+	// 7 is for clear board
 	
 	/* MODULES */
 	wire collision;
@@ -169,11 +171,23 @@ module control
         .complete(module_complete[5])
     );
 
+	wire [7:0] clr_board_addr;
+	wire [5:0] clr_board_data;
+	wire clr_board_wren;
+	clear_ram clean_board(
+		.enable(module_select[7]),
+		.clk(clk),
+		.ram_addr(clr_board_addr),
+		.wren(clr_board_wren),
+		.data(clr_board_data),
+		.complete(module_complete[7])
+	)
+
 	always @(*)
    	begin: state_table
 		case (curr_state)
-			CLEAR_BOARD: next_state = go ? CLEAR_BOARD_WAIT : CLEAR_BOARD;
-			CLEAR_BOARD_WAIT: next_state = go ? CLEAR_BOARD_WAIT: GET_PIECE;
+			START: next_state = go ? START_WAIT : START;
+			START_WAIT: next_state = go ? START_WAIT: GET_PIECE;
 			GET_PIECE: next_state = GET_PIECE_WAIT; 
 			GET_PIECE_WAIT : next_state = DETECT_COLLISION;
 
@@ -204,6 +218,7 @@ module control
 			SETUP_DRAW_NEW: next_state = DRAW_NEW;
 			DRAW_NEW: next_state = module_complete[1] ? DRAW_NEW_WAIT : DRAW_NEW;
 			DRAW_NEW_WAIT: next_state = module_complete[2] ? DETECT_COLLISION : DRAW_NEW_WAIT;
+			BOARD_CLEAR: next_state = module_complete[7] ? START : BOARD_CLEAR;
 			default: next_state = GET_PIECE;
 		endcase
    end // state_table
@@ -223,10 +238,11 @@ module control
 		ram_in = 6'b000000;
 		ram_wren = 1'b0;
 		case (curr_state)
-			CLEAR_BOARD: begin
-				// TODO
-			end
-			GET_PIECE: begin
+			BOARD_CLEAR: begin
+				ram_addr = clr_board_addr;
+				ram_in = clr_board_data;
+				ram_wren = clr_board_wren;
+				module_select = 8'b10000000;
 			end
 			DETECT_COLLISION: begin
 				ram_addr = collision_ram_addr;
@@ -296,7 +312,7 @@ module control
 	
 	always @(posedge clk) begin
 		if (~reset_n) begin 
-			curr_state <= CLEAR_BOARD;
+			curr_state <= BOARD_CLEAR;
 			curr_anc_X <= 4'd4;
 			curr_anc_Y <= 1'd0;
 			piece_rng <= 3'b000;
