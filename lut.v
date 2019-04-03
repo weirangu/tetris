@@ -50,14 +50,14 @@ module lut
 					Y = 8'b01_01_01_00;
 				end
 				
-				if (rotation == 2'b01) begin
+				else if (rotation == 2'b01) begin
 					X = 8'b00_00_00_01;
 					Y = 8'b00_01_10_10;
 				end
 				
-				if (rotation == 2'b10) begin
+				else if (rotation == 2'b10) begin
 					X = 8'b00_00_01_10;
-					Y = 8'b01_10_01_01; // may be a problem
+					Y = 8'b00_01_00_00; // may be a problem
 				end
 				
 				else begin

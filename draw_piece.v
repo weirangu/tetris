@@ -10,8 +10,8 @@ module draw_ram
 		output complete	// 1 when this is finished drawing (if we're using this as a wren signal, we should invert it)
 	);
 	localparam
-		X_START = 8'b00000000,
-		Y_START = 7'b0000000;
+		X_START = 8'b00111011,
+		Y_START = 7'b0001011;
 		
 	reg [4:0] board_location_x;	// Which part of the board we're in (for x)
 	reg [5:0] board_location_y;	// Which part of the board we're in (for y)
@@ -42,8 +42,8 @@ module draw_ram
 				end
 			end
 			offset <= offset + 1'b1;
-			X <= (board_location_x * 7'd4) + X_START + offset[1:0];
-			Y <= (board_location_y * 6'd4) + Y_START + offset[3:2];
+			X <= (board_location_x * 8'd4) + X_START + offset[1:0];
+			Y <= (board_location_y * 7'd4) + Y_START + offset[3:2];
 		end
 	end
 

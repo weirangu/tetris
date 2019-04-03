@@ -8,26 +8,22 @@ module clear_ram
         output reg complete
     );
     
-    reg [7:0] counter; // The ram unit we're operating on
 	 assign data = 6'b000000;
 
     always @(posedge clk) begin
         if (~enable) begin
 				ram_addr <= 7'd0;
             wren <= 1'b0;
-            counter <= 7'd0;
             complete <= 1'b0;
         end
         else begin
-            if (counter <= 7'd239) begin
-                ram_addr = counter;
-                wren = 1'b1;
-                counter = counter + 1'd1;
+            if (ram_addr < 8'd250) begin
+                wren <= 1'b1;
+                ram_addr <= ram_addr + 1'd1;
             end
             else begin
                 ram_addr <= 7'd0;
                 wren <= 1'b0;
-                counter <= 7'd0;
                 complete <= 1'b1;
             end
         end

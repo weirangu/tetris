@@ -1,9 +1,11 @@
 module top_level
 	(
 		CLOCK_50,	//	On Board 50 MHz
-      	KEY,			// Keys
-      	SW,			// Switches
-			LEDR,
+      KEY,			// Keys
+      SW,			// Switches
+		LEDR,
+		HEX0,
+		HEX1,
 		VGA_CLK, 	//	VGA Clock
 		VGA_HS,		//	VGA H_SYNC
 		VGA_VS,		//	VGA V_SYNC
@@ -28,6 +30,7 @@ module top_level
 	output [9:0] VGA_R;   				//	VGA Red[9:0]
 	output [9:0] VGA_G;	 				//	VGA Green[9:0]
 	output [9:0] VGA_B;   				//	VGA Blue[9:0]
+	output [6:0] HEX0, HEX1;
 	inout PS2_CLK;
 	inout PS2_DAT;
 	output [9:0] LEDR;
@@ -77,7 +80,8 @@ module top_level
 			.d(right),
 			.space(rotate)
 	);
-		
+	
+	wire [3:0] score;
 	control ctl(
 		.reset_n(resetn),
 		.go(KEY[1]),
@@ -88,6 +92,17 @@ module top_level
 		.X(x),
 		.Y(y),
 		.colour(colour),
-		.writeEn(writeEn)
+		.writeEn(writeEn),
+		.total_score(score)
+	);
+	
+	hex_decoder hex0 (
+		.hex_digit(score[1:0]),
+		.segments(HEX0)
+	);
+	
+	hex_decoder hex1 (
+		.hex_digit(score[3:2]),
+		.segments(HEX1)
 	);
 endmodule

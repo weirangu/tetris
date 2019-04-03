@@ -9,12 +9,11 @@ module control
 		output reg [7:0] X,
 		output reg [6:0] Y,
 		output reg [5:0] colour,
-		output reg writeEn
+		output reg writeEn,
+		output reg [3:0] total_score
 	);
 	
 	localparam
-		START = 5'd0,
-		START_WAIT = 5'd1,
 		GET_PIECE = 5'd2,
 		GET_PIECE_WAIT = 5'd3,
 		DETECT_COLLISION = 5'd4,
@@ -43,8 +42,8 @@ module control
 	
 	reg [4:0] curr_anc_X;
 	reg [5:0] curr_anc_Y;
-	wire [4:0] new_anc_X;
-	wire [5:0] new_anc_Y;
+	reg [4:0] new_anc_X;
+	reg [5:0] new_anc_Y;
 	reg [2:0] curr_piece;
 	reg [1:0] curr_rotation;
 	reg [1:0] new_rotation;
@@ -53,8 +52,6 @@ module control
 	reg [4:0] X_to_Draw;
 	reg [5:0] Y_to_Draw;
 	
-	/* 0 is FALLING PIECE
-	*/
 	reg [7:0] module_select; // Determines which module we're currently using
 	wire [7:0] module_complete; // 1 on the clock cycle where the module finishes computation (and this is when the results can be used)
 	
@@ -68,7 +65,7 @@ module control
 	/* MODULES */
 	wire [7:0] collision_ram_addr;
 	wire collides_left, collides_right, collides_down, collides_rotate;
-	
+	reg no_move;
 	collision f(
 		.enable(module_select[0]), 
 		.X_anchor(curr_anc_X),
@@ -144,6 +141,7 @@ module control
 	wire [7:0] clr_ram_addr;
 	wire [5:0] clr_ram_data;
 	wire clr_ram_wren;
+	wire [1:0] rows_cleared;
 	row_clear rowclr (
         .enable(module_select[5]),
         .clk(clk),
@@ -151,6 +149,7 @@ module control
         .ram_addr(clr_ram_addr), 
         .ram_data(clr_ram_data),
         .ram_wren(clr_ram_wren),
+		  .rows_cleared(rows_cleared),
         .complete(module_complete[5])
     );
 
@@ -169,8 +168,6 @@ module control
 	always @(*)
    	begin: state_table
 		case (curr_state)
-			START: next_state = go ? START_WAIT : START;
-			START_WAIT: next_state = go ? START_WAIT: GET_PIECE;
 			GET_PIECE: next_state = GET_PIECE_WAIT; 
 			GET_PIECE_WAIT : next_state = DETECT_COLLISION;
 			DETECT_COLLISION: next_state = module_complete[0] ? MOVE_PIECE : DETECT_COLLISION;
@@ -183,7 +180,7 @@ module control
 			SETUP_DRAW_NEW: next_state = DRAW_NEW;
 			DRAW_NEW: next_state = module_complete[1] ? DRAW_NEW_WAIT : DRAW_NEW;
 			DRAW_NEW_WAIT: next_state = module_complete[2] ? DETECT_COLLISION : DRAW_NEW_WAIT;
-			BOARD_CLEAR: next_state = module_complete[7] ? DRAW_RAM : BOARD_CLEAR;
+			BOARD_CLEAR: next_state = module_complete[7] && ~go ? DRAW_RAM : BOARD_CLEAR;
 			default: next_state = BOARD_CLEAR;
 		endcase
    end // state_table
@@ -285,28 +282,34 @@ module control
 
 			if (piece_rng < 3'b110) piece_rng <= piece_rng + 1'b1;
 			else piece_rng <= 3'b000;
+			
+			if (curr_state == BOARD_CLEAR) total_score <= 4'b0;
 
 			if (curr_state == MOVE_PIECE) begin
 				if (rotate && !collides_rotate) begin
 					new_rotation <= curr_rotation + 1'b1;
-					no_move = 1'b0;
+					no_move <= 1'b0;
 				end
 				else if (left && !collides_left) begin
 					new_anc_Y <= curr_anc_Y;
 					new_anc_X <= curr_anc_X - 1'b1;
-					no_move = 1'b0;
+					no_move <= 1'b0;
 				end
 				else if (right && !collides_right) begin
 					new_anc_Y <= curr_anc_Y;
 					new_anc_X <= curr_anc_X + 1'b1;
-					no_move = 1'b0;
+					no_move <= 1'b0;
 				end
 				else if (!collides_down) begin
 					new_anc_Y <= curr_anc_Y + 1'b1;
 					new_anc_X <= curr_anc_X;
-					no_move = 1'b0;
+					no_move <= 1'b0;
 				end
-				else no_move = 1'b1;
+				else no_move <= 1'b1;
+			end
+			
+			if (curr_state == ROW_CLEAR) begin
+				if (module_complete[5]) total_score <= total_score + rows_cleared;
 			end
 			
 			if (curr_state == SETUP_DRAW_NEW) begin
@@ -325,7 +328,7 @@ module control
 				new_rotation <= 2'b00;
 				curr_anc_X <= 4'd4;
 				curr_anc_Y <= 1'd0;
-				no_move = 1'b0;
+				no_move <= 1'b0;
 			end
 		end
 	end
