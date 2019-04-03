@@ -18,9 +18,7 @@ module control
 		GET_PIECE = 5'd2,
 		GET_PIECE_WAIT = 5'd3,
 		DETECT_COLLISION = 5'd4,
-		DETECT_COLLISION_WAIT = 5'd5,
-		CHECK_ROTATION = 5'd6,
-		ROTATE_PIECE = 5'd7,
+		MOVE_PIECE = 5'd5,
 		WRITE_TO_RAM = 5'd8,
 		SETUP_ERASE_OLD = 5'd9,
 		ERASE_OLD = 5'd10,
@@ -68,38 +66,23 @@ module control
 	// 7 is for clear board
 	
 	/* MODULES */
-	wire collision;
 	wire [7:0] collision_ram_addr;
+	wire collides_left, collides_right, collides_down, collides_rotate;
+	
 	collision f(
 		.enable(module_select[0]), 
 		.X_anchor(curr_anc_X),
 		.Y_anchor(curr_anc_Y), 
 		.block(curr_piece),
 		.curr_rotation(curr_rotation),
-		.left(left),
-		.right(right),
 		.clk(clk), 
 		.ram_Q(ram_out), 
-		.X_out(new_anc_X), 
-		.Y_out(new_anc_Y), 
-		.collision(collision), 
+		.collides_left(collides_left),
+		.collides_right(collides_right),
+		.collides_down(collides_down),
+		.collides_rotate(collides_rotate),
 		.ram_addr(collision_ram_addr), 
 		.complete(module_complete[0])
-	);
-
-	wire rotate_collides;
-	wire [7:0] rotation_ram_addr;
-	check_rotation can_rotate (
-		.enable(module_select[6]),
-		.X_anchor(curr_anc_X),
-		.Y_anchor(curr_anc_Y), 
-		.block(curr_piece),
-		.curr_rotation(curr_rotation),
-		.clk(clk),
-		.ram_Q(ram_out), 
-		.rotate_collides(rotate_collides), 
-		.ram_addr(rotation_ram_addr), 
-		.complete(module_complete[6])
 	);
 	
 	reg draw_clear;
@@ -190,26 +173,8 @@ module control
 			START_WAIT: next_state = go ? START_WAIT: GET_PIECE;
 			GET_PIECE: next_state = GET_PIECE_WAIT; 
 			GET_PIECE_WAIT : next_state = DETECT_COLLISION;
-
-			DETECT_COLLISION: begin
-				if (rotate) 
-					next_state = CHECK_ROTATION;
-				else if (module_complete[0]) 
-					next_state = DETECT_COLLISION_WAIT;
-				else
-					next_state = DETECT_COLLISION;
-			end
-
-			DETECT_COLLISION_WAIT: next_state = collision ? WRITE_TO_RAM : SETUP_ERASE_OLD;
-
-			CHECK_ROTATION: begin 
-				if (module_complete[6]) begin
-					if (!rotate_collides) next_state = ROTATE_PIECE;
-					else next_state = DETECT_COLLISION;
-				end
-				else next_state = CHECK_ROTATION;
-			end
-			ROTATE_PIECE: next_state = DETECT_COLLISION;
+			DETECT_COLLISION: next_state = module_complete[0] ? MOVE_PIECE : DETECT_COLLISION;
+			MOVE_PIECE: next_state = no_move ? WRITE_TO_RAM : SETUP_ERASE_OLD;
 			WRITE_TO_RAM: next_state = module_complete[3] ? ROW_CLEAR : WRITE_TO_RAM;
 			ROW_CLEAR: next_state = module_complete[5] ? DRAW_RAM : ROW_CLEAR;
 			DRAW_RAM: next_state = module_complete[4] ? GET_PIECE : DRAW_RAM;
@@ -248,12 +213,8 @@ module control
 				ram_addr = collision_ram_addr;
 				module_select = 8'b00000001;
 			end
-			DETECT_COLLISION_WAIT: begin
+			MOVE_PIECE: begin
 				module_select = 8'b00000001;
-			end
-			CHECK_ROTATION: begin
-				ram_addr = rotation_ram_addr;
-				module_select = 8'b01000000;
 			end
 			WRITE_TO_RAM: begin
 				ram_addr = atr_ram_addr;
@@ -316,6 +277,7 @@ module control
 			curr_anc_X <= 4'd4;
 			curr_anc_Y <= 1'd0;
 			piece_rng <= 3'b000;
+			no_move <= 1'b0;
 		end
 		else begin
 
@@ -324,8 +286,27 @@ module control
 			if (piece_rng < 3'b110) piece_rng <= piece_rng + 1'b1;
 			else piece_rng <= 3'b000;
 
-			if (curr_state == ROTATE_PIECE) begin
-				new_rotation <= curr_rotation + 1'b1;
+			if (curr_state == MOVE_PIECE) begin
+				if (rotate && !collides_rotate) begin
+					new_rotation <= curr_rotation + 1'b1;
+					no_move = 1'b0;
+				end
+				else if (left && !collides_left) begin
+					new_anc_Y <= curr_anc_Y;
+					new_anc_X <= curr_anc_X - 1'b1;
+					no_move = 1'b0;
+				end
+				else if (right && !collides_right) begin
+					new_anc_Y <= curr_anc_Y;
+					new_anc_X <= curr_anc_X + 1'b1;
+					no_move = 1'b0;
+				end
+				else if (!collides_down) begin
+					new_anc_Y <= curr_anc_Y + 1'b1;
+					new_anc_X <= curr_anc_X;
+					no_move = 1'b0;
+				end
+				else no_move = 1'b1;
 			end
 			
 			if (curr_state == SETUP_DRAW_NEW) begin
@@ -344,6 +325,7 @@ module control
 				new_rotation <= 2'b00;
 				curr_anc_X <= 4'd4;
 				curr_anc_Y <= 1'd0;
+				no_move = 1'b0;
 			end
 		end
 	end
