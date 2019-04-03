@@ -40,10 +40,10 @@ module control
 	
 	ram_board board(ram_addr, clk, ram_in, ram_wren, ram_out);
 	
-	reg [4:0] curr_anc_X;
-	reg [5:0] curr_anc_Y;
-	reg [4:0] new_anc_X;
-	reg [5:0] new_anc_Y;
+	reg [3:0] curr_anc_X;
+	reg [4:0] curr_anc_Y;
+	reg [3:0] new_anc_X;
+	reg [4:0] new_anc_Y;
 	reg [2:0] curr_piece;
 	reg [1:0] curr_rotation;
 	reg [1:0] new_rotation;
@@ -272,7 +272,7 @@ module control
 		if (~reset_n) begin 
 			curr_state <= BOARD_CLEAR;
 			curr_anc_X <= 4'd4;
-			curr_anc_Y <= 1'd0;
+			curr_anc_Y <= 5'd0;
 			piece_rng <= 3'b000;
 			no_move <= 1'b0;
 		end

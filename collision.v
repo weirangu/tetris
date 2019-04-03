@@ -1,8 +1,8 @@
 module collision
 	(
 		input enable,
-		input [4:0] X_anchor,
-		input [5:0] Y_anchor,
+		input [3:0] X_anchor,
+		input [4:0] Y_anchor,
 		input [2:0] block,
 		input [1:0] curr_rotation,
 		input clk,

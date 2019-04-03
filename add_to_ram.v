@@ -1,8 +1,8 @@
 module add_to_ram
     (
         input enable,
-        input [4:0] x_anc,
-        input [5:0] y_anc,
+        input [3:0] x_anc,
+        input [4:0] y_anc,
         input [2:0] block,
         input [1:0] rotation,
         input clk,
@@ -14,8 +14,8 @@ module add_to_ram
     
     reg [1:0] state; // the 3 states, setting up addr and data, enabling wren and disabling wren
     reg [2:0] curr_block; // Which block we're currently storing
-    reg [4:0] curr_x;
-    reg [5:0] curr_y; 
+    reg [3:0] curr_x;
+    reg [4:0] curr_y; 
     
     coord_to_addr a(curr_x, curr_y, ram_addr);
 
@@ -74,8 +74,8 @@ endmodule
 
 module coord_to_addr
 	(
-		input [4:0] X,
-		input [5:0] Y,
+		input [3:0] X,
+		input [4:0] Y,
 		output [7:0] addr
 	);
 	
