@@ -79,5 +79,5 @@ module coord_to_addr
 		output [7:0] addr
 	);
 	
-	assign addr = Y * 8'd10 + X;
+	assign addr = (Y * 8'd10) + X;
 endmodule

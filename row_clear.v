@@ -6,7 +6,7 @@ module row_clear
 		output reg [7:0] ram_addr,
 		output reg [5:0] ram_data,
 		output reg ram_wren,
-		  output reg [1:0] rows_cleared,
+		output reg [1:0] rows_cleared,
 		output reg complete
 	);
 	reg [4:0] curr_y;   // The current y row that we're checking
@@ -42,12 +42,12 @@ module row_clear
 		1'b0: begin
 			ram_addr = check_ram_addr;
 			ram_wren = 1'b0;
-		 ram_data = 6'd0;
+			ram_data = 6'd0;
 		end
 		1'b1: begin
 			ram_addr = sd_ram_addr;
-		 ram_data = sd_ram_data;
-		 ram_wren = sd_ram_wren;
+			ram_data = sd_ram_data;
+			ram_wren = sd_ram_wren;
 		end
 	endcase
 
@@ -57,10 +57,10 @@ module row_clear
 			curr_x <= 4'd0;
 			has_empty_blk <= 1'b0;
 			complete <= 1'b0;
-				sd_enable <= 1'b0;
-				rows_cleared <= 2'd0;
+			sd_enable <= 1'b0;
+			rows_cleared <= 2'd0;
 		end else begin
-			if (curr_x == 5'd10) begin
+			if (curr_x == 5'd12) begin
 				// We've checked all the x values
 				if (~has_empty_blk) begin
 					// We should be shifting the row down
@@ -68,26 +68,26 @@ module row_clear
 						// We don't modify curr_y because we don't need to,
 						// the rows are shifted down so we can still test this row
 						curr_x <= 4'd0;
-
 						sd_enable <= 1'b0;
 						has_empty_blk <= 1'b0;
 					end
-						  else if (~sd_enable) begin
-								rows_cleared <= rows_cleared + 2'd1;
+					else if (~sd_enable) begin
+						rows_cleared <= rows_cleared + 2'd1;
 						sd_enable <= 1'b1;
 					end
 				end
-					 else begin
+				
+				else begin
 					if (curr_y == 6'd0) complete <= 1'b1;
 					curr_y <= curr_y - 1'b1;
 					curr_x <= 4'd0;
 					has_empty_blk <= 1'b0;
 				end
 			end
-				else begin
+			
+			else begin
 				// Let's check the current x values
-				has_empty_blk <= has_empty_blk || (ram_Q == 6'b000000);
-
+				has_empty_blk <= has_empty_blk || (curr_x > 5'd0 && ram_Q == 6'b000000); // RAM is 2 cycles behind
 				// Setup RAM for next read
 				curr_x <= curr_x + 1'b1;
 			end
@@ -111,10 +111,11 @@ module shift_down
 	localparam
 		SETUP = 3'b000,
 		READ_PREP = 3'b001,
-		READ = 3'b010,
-		WRITE_PREP = 3'b011,
-		WRITE = 3'b100,
-		WRITE_END = 3'b101;
+		READ_PREP_2 = 3'b010,
+		READ = 3'b011,
+		WRITE_PREP = 3'b100,
+		WRITE = 3'b101,
+		WRITE_END = 3'b110;
 
 	reg [7:0] counter; // Keeps track of which block we're currently writing
 	reg [2:0] curr_state;
@@ -130,7 +131,7 @@ module shift_down
 		end
 		else begin
 			case (curr_state)
-				SETUP: counter <= end_addr - 8'd11;
+				SETUP: counter <= end_addr - 8'd12;
 				READ_PREP: ram_addr <= counter;
 				READ: ram_data <= ram_Q;
 				WRITE_PREP: ram_addr <= counter + 8'd10;

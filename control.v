@@ -6,11 +6,12 @@ module control
 		input left,
 		input right,
 		input rotate,
+		input down,
 		output reg [7:0] X,
 		output reg [6:0] Y,
 		output reg [5:0] colour,
 		output reg writeEn,
-		output reg [3:0] total_score
+		output reg [7:0] total_score
 	);
 	
 	localparam
@@ -18,6 +19,7 @@ module control
 		GET_PIECE_WAIT = 5'd3,
 		DETECT_COLLISION = 5'd4,
 		MOVE_PIECE = 5'd5,
+		BUFFER = 5'd6,
 		WRITE_TO_RAM = 5'd8,
 		SETUP_ERASE_OLD = 5'd9,
 		ERASE_OLD = 5'd10,
@@ -26,9 +28,8 @@ module control
 		DRAW_NEW_WAIT = 5'd13,
 		DRAW_RAM = 5'd14,
 		ROW_CLEAR = 5'd15,
-		BOARD_CLEAR = 5'd16;
-		
-	localparam speed = 25'b0101111101011110000100000; // .5Hz
+		BOARD_CLEAR = 5'd16,
+		END_GAME = 5'd17;
 
 	reg [4:0] curr_state, next_state;
 	
@@ -102,7 +103,8 @@ module control
 	
 	rate_divider rd(
 		.enable(module_select[2]),
-		.rate(speed),
+		.score(total_score),
+		.down(down),
 		.clk(clk),
 		.rd(module_complete[2])
 	);
@@ -171,16 +173,18 @@ module control
 			GET_PIECE: next_state = GET_PIECE_WAIT; 
 			GET_PIECE_WAIT : next_state = DETECT_COLLISION;
 			DETECT_COLLISION: next_state = module_complete[0] ? MOVE_PIECE : DETECT_COLLISION;
-			MOVE_PIECE: next_state = no_move ? WRITE_TO_RAM : SETUP_ERASE_OLD;
+			MOVE_PIECE: next_state = no_move ? (curr_anc_Y == 5'd1 ? END_GAME : WRITE_TO_RAM) : SETUP_ERASE_OLD;
+			END_GAME: next_state = BOARD_CLEAR;
 			WRITE_TO_RAM: next_state = module_complete[3] ? ROW_CLEAR : WRITE_TO_RAM;
 			ROW_CLEAR: next_state = module_complete[5] ? DRAW_RAM : ROW_CLEAR;
 			DRAW_RAM: next_state = module_complete[4] ? GET_PIECE : DRAW_RAM;
 			SETUP_ERASE_OLD: next_state = ERASE_OLD;
-			ERASE_OLD: next_state = module_complete[1] ? SETUP_DRAW_NEW : ERASE_OLD;
+			ERASE_OLD: next_state = module_complete[1] ? BUFFER : ERASE_OLD;
+			BUFFER: next_state = SETUP_DRAW_NEW;
 			SETUP_DRAW_NEW: next_state = DRAW_NEW;
 			DRAW_NEW: next_state = module_complete[1] ? DRAW_NEW_WAIT : DRAW_NEW;
 			DRAW_NEW_WAIT: next_state = module_complete[2] ? DETECT_COLLISION : DRAW_NEW_WAIT;
-			BOARD_CLEAR: next_state = module_complete[7] && ~go ? DRAW_RAM : BOARD_CLEAR;
+			BOARD_CLEAR: next_state = module_complete[7] && go ? DRAW_RAM : BOARD_CLEAR;
 			default: next_state = BOARD_CLEAR;
 		endcase
    end // state_table
@@ -245,6 +249,8 @@ module control
 				Y = draw_y;
 				writeEn = 1'b1;
 				module_select = 8'b00000010;
+			end
+			BUFFER: begin
 			end
 			SETUP_DRAW_NEW: begin
 				X_to_Draw = new_anc_X;

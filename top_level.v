@@ -3,7 +3,6 @@ module top_level
 		CLOCK_50,	//	On Board 50 MHz
       KEY,			// Keys
       SW,			// Switches
-		LEDR,
 		HEX0,
 		HEX1,
 		VGA_CLK, 	//	VGA Clock
@@ -33,10 +32,6 @@ module top_level
 	output [6:0] HEX0, HEX1;
 	inout PS2_CLK;
 	inout PS2_DAT;
-	output [9:0] LEDR;
-	
-	wire resetn;
-	assign resetn = KEY[0];
 	
 	// Create the colour, x, y and writeEn wires that are inputs to the controller.
 	wire [5:0] colour;
@@ -45,7 +40,7 @@ module top_level
 	wire writeEn;
 	
 	// Keyboard Wires
-	wire left,right,rotate;
+	wire left,right,rotate,down,go,enter;
 	
 	// Create an Instance of a VGA controller - there can be only one!
 	// Define the number of colours as well as the initial background
@@ -70,6 +65,9 @@ module top_level
 		defparam VGA.BITS_PER_COLOUR_CHANNEL = 2;
 		defparam VGA.BACKGROUND_IMAGE = "bg.mif";
 		
+	wire resetn;
+	assign resetn = !enter;
+		
 	// Keyboard module
 	keyboard_tracker #(.PULSE_OR_HOLD(0)) keyboard(
 			.clock(CLOCK_50),
@@ -78,17 +76,21 @@ module top_level
 			.PS2_DAT(PS2_DAT),
 			.a(left),
 			.d(right),
-			.space(rotate)
+			.s(down),
+			.w(rotate),
+			.space(go),
+			.enter(enter)
 	);
 	
-	wire [3:0] score;
+	wire [7:0] score;
 	control ctl(
 		.reset_n(resetn),
-		.go(KEY[1]),
+		.go(go),
 		.clk(CLOCK_50),
 		.left(left),
 		.right(right),
 		.rotate(rotate),
+		.down(down),
 		.X(x),
 		.Y(y),
 		.colour(colour),
@@ -97,12 +99,12 @@ module top_level
 	);
 	
 	hex_decoder hex0 (
-		.hex_digit(score[1:0]),
+		.hex_digit(score[3:0]),
 		.segments(HEX0)
 	);
 	
 	hex_decoder hex1 (
-		.hex_digit(score[3:2]),
+		.hex_digit(score[7:4]),
 		.segments(HEX1)
 	);
 endmodule
